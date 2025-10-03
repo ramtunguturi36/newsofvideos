@@ -1,0 +1,32 @@
+import mongoose from 'mongoose';
+
+const { Schema, model, Types } = mongoose;
+
+const itemSchema = new Schema(
+  {
+    type: { type: String, enum: ['template', 'folder'], required: true },
+    templateId: { type: Types.ObjectId, ref: 'Template' },
+    folderId: { type: Types.ObjectId, ref: 'Folder' },
+    title: { type: String, required: true },
+    price: { type: Number, required: true },
+    qrUrl: { type: String },
+    videoUrl: { type: String },
+  },
+  { _id: false }
+);
+
+const purchaseSchema = new Schema(
+  {
+    userId: { type: Types.ObjectId, ref: 'User', required: true },
+    items: { type: [itemSchema], default: [] },
+    totalAmount: { type: Number, required: true },
+    discountApplied: { type: Number, default: 0 },
+  },
+  { timestamps: { createdAt: true, updatedAt: false } }
+);
+
+const Purchase = model('Purchase', purchaseSchema);
+
+export default Purchase;
+
+
