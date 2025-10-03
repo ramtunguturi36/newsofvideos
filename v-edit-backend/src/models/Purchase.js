@@ -21,6 +21,8 @@ const purchaseSchema = new Schema(
     items: { type: [itemSchema], default: [] },
     totalAmount: { type: Number, required: true },
     discountApplied: { type: Number, default: 0 },
+    paymentId: { type: String },
+    orderId: { type: String },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );

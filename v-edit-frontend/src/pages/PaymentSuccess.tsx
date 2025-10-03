@@ -69,8 +69,11 @@ export default function PaymentSuccess() {
           throw new Error('Purchase not found')
         }
         
-        setPurchase(purchaseData)
+        console.log('Purchase data:', purchaseData);
+        console.log('Total amount:', purchaseData.totalAmount);
+        console.log('Items:', purchaseData.items);
         
+        setPurchase(purchaseData)
         
         // Set flag to refresh order history when user navigates back
         console.log('Setting refreshOrders flag to true');

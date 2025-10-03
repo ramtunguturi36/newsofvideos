@@ -56,6 +56,24 @@ router.post('/verify-payment', authMiddleware, async (req, res) => {
         } catch (error) {
           console.error('Error fetching template:', error);
         }
+      } else if (item.type === 'folder') {
+        try {
+          // Fetch the actual folder to get the real data
+          const Folder = (await import('../models/Folder.js')).default;
+          const folder = await Folder.findById(item.id);
+          if (folder) {
+            console.log(`Folder found: ID=${folder._id}, name=${folder.name}`);
+            return {
+              ...item,
+              folderId: item.id,
+              title: folder.name,
+              price: item.price,
+              description: folder.description
+            };
+          }
+        } catch (error) {
+          console.error('Error fetching folder:', error);
+        }
       }
       return item;
     }));

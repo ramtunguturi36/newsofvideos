@@ -399,6 +399,11 @@ export default function UserExplorer() {
       }
     };
 
+    // Check for refresh flag on mount
+    if (localStorage.getItem('refreshOrders') === 'true') {
+      handleStorageChange();
+    }
+
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [activeTab]);

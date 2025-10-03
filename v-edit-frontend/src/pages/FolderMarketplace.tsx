@@ -30,6 +30,25 @@ const FolderMarketplace = () => {
 
   useEffect(() => {
     loadFolders();
+    
+    // Check for refresh flag from payment success
+    const checkRefreshFlag = () => {
+      if (localStorage.getItem('refreshOrders') === 'true') {
+        console.log('Refreshing folder access after payment...');
+        loadFolders();
+        localStorage.removeItem('refreshOrders');
+      }
+    };
+    
+    checkRefreshFlag();
+    
+    // Listen for storage changes
+    const handleStorageChange = () => {
+      checkRefreshFlag();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const loadFolders = async () => {

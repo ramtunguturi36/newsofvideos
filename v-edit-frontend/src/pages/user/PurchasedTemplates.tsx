@@ -56,7 +56,9 @@ export default function PurchasedTemplates() {
       const folderMap = new Map<string, PurchasedFolder>();
       
       purchases.forEach((purchase: any) => {
+        console.log('Processing purchase:', purchase);
         purchase.items.forEach((item: any) => {
+          console.log('Processing item:', item);
           if (item.type === 'template' && item.qrUrl) {
             const folderName = item.folderName || 'General Templates';
             const folderId = item.folderId || 'general';
