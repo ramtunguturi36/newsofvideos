@@ -144,7 +144,7 @@ export async function uploadTemplate(data: {
     })
     return res.data as { template: TemplateItem }
   } catch (error) {
-    console.error('Upload error details:', error.response?.data || error.message)
+    console.error('Upload error details:', (error as any).response?.data || (error as any).message)
     throw error // Re-throw to handle in the component
   }
 }

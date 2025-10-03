@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useMemo, useState } from 'react'
 
-type CartItem =
+export type CartItem =
   | { id: string; type: 'template'; title: string; price: number }
   | { id: string; type: 'folder'; title: string; price: number }
 

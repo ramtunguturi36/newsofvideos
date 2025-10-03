@@ -1,5 +1,5 @@
 import { loadScript } from './utils';
-import { CartItem } from '@/context/CartContext';
+import type { CartItem } from '@/context/CartContext';
 import { backend } from './backend';
 import type { AxiosResponse } from 'axios';
 

@@ -89,14 +89,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Update user state
       setUser(user);
-      
-      // Don't redirect here, let the Login component handle it
-      return user;
     } catch (error) {
       console.error('Login failed:', error);
       localStorage.removeItem('token');
       setUser(null);
-      throw new Error(error.response?.data?.message || 'Login failed. Please check your credentials.');
+      throw new Error((error as any).response?.data?.message || 'Login failed. Please check your credentials.');
     }
   };
 

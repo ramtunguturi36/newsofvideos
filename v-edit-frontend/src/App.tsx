@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -21,7 +22,7 @@ import Contact from './pages/Contact';
 import { Toaster } from 'sonner';
 
 // Protected Route Component
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
 
@@ -41,7 +42,7 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 };
 
 // Admin Route Component
-const AdminRoute = ({ children }: { children: JSX.Element }) => {
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAdmin } = useAuth();
   const location = useLocation();
 

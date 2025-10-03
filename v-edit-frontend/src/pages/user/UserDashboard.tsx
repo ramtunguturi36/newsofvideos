@@ -48,18 +48,16 @@ import { toast } from "sonner";
 import CartDrawer from "@/components/CartDrawer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getHierarchy } from "@/lib/backend";
-import type { Folder, TemplateItem } from "@/lib/backend";
+import type { Folder, TemplateItem } from "@/lib/types";
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 
 interface ExtendedTemplateItem extends TemplateItem {
-  videoUrl: string;
-  qrUrl: string;
-  folderId: string;
+  // TemplateItem already has videoUrl, qrUrl, folderId from the base type
 }
 
 interface ExtendedFolder extends Folder {
-  parentId: string | null;
+  // Folder already has all needed properties from the base type
 }
 
 // Stats card component
