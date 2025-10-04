@@ -68,6 +68,15 @@ export const processPayment = async (
     // Create order on your backend
     const order = await createRazorpayOrder(items);
 
+    // Store data in a way that's accessible in the handler
+    const paymentData = {
+      items: items,
+      totalAmount: totalAmountInRupees,
+      discountApplied: 0
+    };
+
+    console.log('Payment data prepared:', paymentData);
+
     const options: RazorpayOptions = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID || '',
       amount: order.amount,
@@ -76,17 +85,17 @@ export const processPayment = async (
       description: `Order for ${items.length} items`,
       order_id: order.orderId,
       handler: function (response) {
-        console.log('Payment handler - items:', items);
-        console.log('Payment handler - totalAmountInRupees:', totalAmountInRupees);
+        console.log('Payment handler - items:', paymentData.items);
+        console.log('Payment handler - totalAmount:', paymentData.totalAmount);
         
         // Verify the payment on your server
         backend.post('/verify-payment', {
           razorpay_payment_id: response.razorpay_payment_id,
           razorpay_order_id: response.razorpay_order_id,
           razorpay_signature: response.razorpay_signature,
-          items: items, // Pass items directly
-          totalAmount: totalAmountInRupees,
-          discountApplied: 0 // You can calculate this if needed
+          items: paymentData.items, // Pass items directly
+          totalAmount: paymentData.totalAmount,
+          discountApplied: paymentData.discountApplied
         })
         .then(res => {
           if (res.data.purchaseId) {
@@ -100,9 +109,9 @@ export const processPayment = async (
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_order_id: response.razorpay_order_id,
             razorpay_signature: response.razorpay_signature,
-            items: items,
-            totalAmount: totalAmountInRupees,
-            discountApplied: 0
+            items: paymentData.items,
+            totalAmount: paymentData.totalAmount,
+            discountApplied: paymentData.discountApplied
           });
           onError(new Error('Payment verification failed'));
         });
