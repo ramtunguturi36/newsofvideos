@@ -25,14 +25,23 @@ router.post('/verify-payment', authMiddleware, async (req, res) => {
     const isAuthentic = expectedSignature === razorpay_signature;
 
     if (!isAuthentic) {
-      return res.status(400).json({ message: 'Payment verification failed' });
+      console.error('Payment signature verification failed', {
+        expectedSignature,
+        receivedSignature: razorpay_signature,
+        orderId: razorpay_order_id,
+        paymentId: razorpay_payment_id
+      });
+      return res.status(400).json({ 
+        message: 'Payment verification failed',
+        details: 'Signature verification failed'
+      });
     }
 
-    // Create purchase record with items from request body (more reliable than session)
-    const items = req.body.items || req.session.cartItems || [];
-    const totalAmount = req.body.totalAmount || req.session.orderAmount || 0;
-    const discountApplied = req.body.discountApplied || req.session.discountAmount || 0;
-    const couponCode = req.session.couponCode;
+    // Prefer data from request body over session
+    const items = req.body.items || [];
+    const totalAmount = req.body.totalAmount || 0;
+    const discountApplied = req.body.discountApplied || 0;
+    const couponCode = req.body.couponCode || req.session?.couponCode;
     
     console.log('Items from request body:', req.body.items);
     console.log('Items from session:', req.session.cartItems);

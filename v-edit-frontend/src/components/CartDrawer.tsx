@@ -145,7 +145,10 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
             const verifyRes = await backend.post('/verify-payment', {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
-              razorpay_signature: response.razorpay_signature
+              razorpay_signature: response.razorpay_signature,
+              items: items,
+              totalAmount: items.reduce((sum, item) => sum + item.price, 0),
+              discountApplied: 0 // Add your discount logic here if needed
             });
 
             console.log('Payment verification response:', verifyRes.data);

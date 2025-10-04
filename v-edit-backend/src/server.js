@@ -26,6 +26,11 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
+    // In development, allow localhost
+    if (process.env.NODE_ENV !== 'production' && origin?.startsWith('http://localhost')) {
+      return callback(null, true);
+    }
+    
     const allowedOrigins = [
       'http://localhost:5173',
       'https://newsofvideos.onrender.com',
@@ -52,7 +57,9 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    sameSite: 'none',
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
   }
 }));
 
