@@ -28,12 +28,28 @@ router.post('/verify-payment', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'Payment verification failed' });
     }
 
-    // Create purchase record with items from session
-    const items = req.session.cartItems || [];
-    const totalAmount = req.session.orderAmount || 0;
-    const discountApplied = req.session.discountAmount || 0;
+    // Create purchase record with items from request body (more reliable than session)
+    const items = req.body.items || req.session.cartItems || [];
+    const totalAmount = req.body.totalAmount || req.session.orderAmount || 0;
+    const discountApplied = req.body.discountApplied || req.session.discountAmount || 0;
     const couponCode = req.session.couponCode;
     
+    console.log('Items from request body:', req.body.items);
+    console.log('Items from session:', req.session.cartItems);
+    console.log('Total amount from request body:', req.body.totalAmount);
+    console.log('Total amount from session:', req.session.orderAmount);
+    
+    // Validate that we have items
+    if (!items || items.length === 0) {
+      console.error('No items found in request body or session');
+      return res.status(400).json({ 
+        message: 'No items found for purchase',
+        debug: {
+          requestBody: req.body,
+          session: req.session
+        }
+      });
+    }
 
     // Fetch actual template data with QR codes
     const itemsWithQR = await Promise.all(items.map(async (item) => {

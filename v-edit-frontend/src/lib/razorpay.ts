@@ -63,6 +63,7 @@ export const processPayment = async (
 
     // Calculate total amount in paise (Razorpay expects amount in smallest currency unit)
     const totalAmount = items.reduce((sum, item) => sum + (item.price * 100), 0);
+    const totalAmountInRupees = items.reduce((sum, item) => sum + item.price, 0);
     
     // Create order on your backend
     const order = await createRazorpayOrder(items);
@@ -79,7 +80,10 @@ export const processPayment = async (
         backend.post('/verify-payment', {
           razorpay_payment_id: response.razorpay_payment_id,
           razorpay_order_id: response.razorpay_order_id,
-          razorpay_signature: response.razorpay_signature
+          razorpay_signature: response.razorpay_signature,
+          items: items, // Pass items directly
+          totalAmount: totalAmountInRupees,
+          discountApplied: 0 // You can calculate this if needed
         })
         .then(res => {
           if (res.data.purchaseId) {
