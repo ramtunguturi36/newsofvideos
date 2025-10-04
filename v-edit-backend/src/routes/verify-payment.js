@@ -42,11 +42,15 @@ router.post('/verify-payment', authMiddleware, async (req, res) => {
     // Validate that we have items
     if (!items || items.length === 0) {
       console.error('No items found in request body or session');
+      console.error('Request body:', JSON.stringify(req.body, null, 2));
+      console.error('Session data:', JSON.stringify(req.session, null, 2));
       return res.status(400).json({ 
         message: 'No items found for purchase',
         debug: {
           requestBody: req.body,
-          session: req.session
+          session: req.session,
+          itemsFromBody: req.body.items,
+          itemsFromSession: req.session.cartItems
         }
       });
     }

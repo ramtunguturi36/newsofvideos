@@ -76,6 +76,9 @@ export const processPayment = async (
       description: `Order for ${items.length} items`,
       order_id: order.orderId,
       handler: function (response) {
+        console.log('Payment handler - items:', items);
+        console.log('Payment handler - totalAmountInRupees:', totalAmountInRupees);
+        
         // Verify the payment on your server
         backend.post('/verify-payment', {
           razorpay_payment_id: response.razorpay_payment_id,
@@ -92,6 +95,15 @@ export const processPayment = async (
         })
         .catch(err => {
           console.error('Payment verification failed:', err);
+          console.error('Error response data:', err.response?.data);
+          console.error('Request data sent:', {
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_signature: response.razorpay_signature,
+            items: items,
+            totalAmount: totalAmountInRupees,
+            discountApplied: 0
+          });
           onError(new Error('Payment verification failed'));
         });
       },
