@@ -20,3 +20,420 @@ body {
   @apply bg-background text-foreground;
 }
 
+/* Custom animations for V-Edit Pro Dashboard */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out;
+  }
+  
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Modal Video Controls Styling */
+.video-modal video::-webkit-media-controls-panel {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.video-modal video::-webkit-media-controls-play-button,
+.video-modal video::-webkit-media-controls-pause-button {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  border: 2px solid white !important;
+  border-radius: 50% !important;
+}
+
+.video-modal video::-webkit-media-controls-timeline {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.video-modal video::-webkit-media-controls-current-time-display,
+.video-modal video::-webkit-media-controls-time-remaining-display {
+  color: white !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+  font-weight: bold !important;
+}
+
+.video-modal video::-webkit-media-controls-mute-button,
+.video-modal video::-webkit-media-controls-fullscreen-button {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  border: 1px solid white !important;
+  border-radius: 4px !important;
+}
+
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+  to {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+  }
+}
+
+/* Custom gradient backgrounds */
+.gradient-blue-purple {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+}
+
+.gradient-pink-purple {
+  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+}
+
+.gradient-blue-cyan {
+  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+}
+
+/* Enhanced hover effects */
+.hover-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+}
+
+/* Premium Video Card Animations */
+@keyframes cardSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.video-card {
+  animation: cardSlideIn 0.6s ease-out;
+}
+
+/* Enhanced hover effects for video cards */
+.video-card-hover {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.video-card-hover:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Play button animation */
+@keyframes playPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.play-button-hover:hover {
+  animation: playPulse 0.6s ease-in-out;
+}
+
+/* Gradient text effect */
+.gradient-text {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhanced glass morphism */
+.glass-premium {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+/* Staggered animation for grid items */
+.stagger-animation {
+  animation: cardSlideIn 0.6s ease-out;
+}
+
+.stagger-animation:nth-child(1) { animation-delay: 0ms; }
+.stagger-animation:nth-child(2) { animation-delay: 100ms; }
+.stagger-animation:nth-child(3) { animation-delay: 200ms; }
+.stagger-animation:nth-child(4) { animation-delay: 300ms; }
+.stagger-animation:nth-child(5) { animation-delay: 400ms; }
+.stagger-animation:nth-child(6) { animation-delay: 500ms; }
+.stagger-animation:nth-child(7) { animation-delay: 600ms; }
+.stagger-animation:nth-child(8) { animation-delay: 700ms; }
+
+/* Artistic Picture View Enhancements */
+.picture-card-hover {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.picture-card-hover:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 25px 50px -12px rgba(236, 72, 153, 0.25);
+}
+
+/* Pastel gradient backgrounds */
+.pastel-pink {
+  background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+}
+
+.pastel-purple {
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+}
+
+.pastel-blue {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+/* Artistic overlay effects */
+.artistic-overlay {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+}
+
+/* Enhanced glass morphism for picture cards */
+.glass-artistic {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(236, 72, 153, 0.37);
+}
+
+/* Picture grid animations */
+@keyframes pictureSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.picture-slide-in {
+  animation: pictureSlideIn 0.6s ease-out;
+}
+
+/* Heart animation */
+@keyframes heartBeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.heart-beat:hover {
+  animation: heartBeat 0.6s ease-in-out;
+}
+
+/* Tag hover effects */
+.tag-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tag-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Enhanced Picture Card Styling */
+.picture-card-enhanced {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.picture-card-enhanced:hover {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  transform: translateY(-8px) scale(1.02);
+}
+
+/* Enhanced image hover effects */
+.image-hover-effect {
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.image-hover-effect:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1) contrast(1.05);
+}
+
+/* Premium button styling */
+.premium-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  white-space: nowrap;
+}
+
+.premium-button:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+  transform: translateY(-2px);
+}
+
+/* Action button styling */
+.action-button {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+}
+
+.action-button:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  transform: scale(1.1);
+}
+
+/* Enhanced tag styling */
+.tag-premium {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Card content spacing */
+.card-content-spaced {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Enhanced shadow system */
+.shadow-3xl {
+  box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Video Controls Styling */
+video::-webkit-media-controls-panel {
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
+}
+
+video::-webkit-media-controls-play-button {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+}
+
+video::-webkit-media-controls-timeline {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+/* Ensure video controls are visible on hover */
+.video-container:hover video::-webkit-media-controls-panel {
+  opacity: 1;
+}
+
+/* Video click area styling */
+.video-clickable {
+  position: relative;
+  cursor: pointer;
+}
+
+.video-clickable::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  z-index: 1;
+}
+
+/* Play button enhancement */
+.play-overlay {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.play-overlay:hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.95);
+}
+
