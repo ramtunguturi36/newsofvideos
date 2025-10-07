@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Dashboard from './pages/admin/Dashboard';
 import DashboardHome from './pages/admin/components/DashboardHome';
 import TemplatesManager from './pages/admin/components/TemplatesManager';
+import PictureTemplatesManager from './pages/admin/components/PictureTemplatesManager';
 import CouponsManager from './pages/admin/components/CouponsManager';
 import UserLayout from './pages/user/UserLayout';
 import UserDashboard from './pages/user/UserDashboard';
@@ -12,7 +13,11 @@ import Orders from './pages/user/Orders';
 import Settings from './pages/user/Settings';
 import PurchasedTemplates from './pages/user/PurchasedTemplates';
 import PurchasedFolders from './pages/user/PurchasedFolders';
+import MyPictureTemplates from './pages/user/MyPictureTemplates';
+import MyPictureFolders from './pages/user/MyPictureFolders';
 import FolderMarketplace from './pages/FolderMarketplace';
+import PictureFolderMarketplace from './pages/PictureFolderMarketplace';
+import PictureExplorer from './pages/PictureExplorer';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -66,6 +71,8 @@ function App() {
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/folders" element={<FolderMarketplace />} />
+            <Route path="/picture-folders" element={<PictureFolderMarketplace />} />
+            <Route path="/picture-templates" element={<PictureExplorer />} />
             <Route path="/login" element={<Login />} />
             <Route path="/login/admin" element={<AdminLogin />} />
             <Route path="/register" element={<Register />} />
@@ -84,6 +91,8 @@ function App() {
               <Route path="orders" element={<Orders />} />
               <Route path="purchased" element={<PurchasedTemplates />} />
               <Route path="folders" element={<PurchasedFolders />} />
+              <Route path="picture-templates" element={<MyPictureTemplates />} />
+              <Route path="picture-folders" element={<MyPictureFolders />} />
               <Route path="settings/*" element={<Settings />} />
             </Route>
             
@@ -97,6 +106,7 @@ function App() {
             }>
               <Route index element={<DashboardHome />} />
               <Route path="templates" element={<TemplatesManager />} />
+              <Route path="picture-templates" element={<PictureTemplatesManager />} />
               <Route path="coupons" element={<CouponsManager />} />
             </Route>
             

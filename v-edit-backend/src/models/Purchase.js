@@ -4,13 +4,15 @@ const { Schema, model, Types } = mongoose;
 
 const itemSchema = new Schema(
   {
-    type: { type: String, enum: ['template', 'folder'], required: true },
+    type: { type: String, enum: ['template', 'folder', 'picture-template', 'picture-folder'], required: true },
     templateId: { type: Types.ObjectId, ref: 'Template' },
     folderId: { type: Types.ObjectId, ref: 'Folder' },
     title: { type: String, required: true },
     price: { type: Number, required: true },
     qrUrl: { type: String },
     videoUrl: { type: String },
+    previewImageUrl: { type: String }, // For picture templates
+    downloadImageUrl: { type: String }, // For picture templates
   },
   { _id: false }
 );

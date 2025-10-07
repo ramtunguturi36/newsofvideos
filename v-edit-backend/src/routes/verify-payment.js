@@ -9,11 +9,20 @@ const router = express.Router();
 
 router.post('/verify-payment', authMiddleware, async (req, res) => {
   try {
+    console.log('🔐 Payment verification request received');
+    console.log('🔐 User ID:', req.user.userId);
+    console.log('🔐 Request body:', req.body);
+    
     const {
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
     } = req.body;
+
+    console.log('🔐 Payment details:');
+    console.log('🔐 Order ID:', razorpay_order_id);
+    console.log('🔐 Payment ID:', razorpay_payment_id);
+    console.log('🔐 Signature:', razorpay_signature);
 
     // Verify the payment signature
     const body = razorpay_order_id + '|' + razorpay_payment_id;
@@ -21,6 +30,11 @@ router.post('/verify-payment', authMiddleware, async (req, res) => {
       .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
       .update(body.toString())
       .digest('hex');
+
+    console.log('🔐 Signature verification:');
+    console.log('🔐 Expected signature:', expectedSignature);
+    console.log('🔐 Received signature:', razorpay_signature);
+    console.log('🔐 Signatures match:', expectedSignature === razorpay_signature);
 
     const isAuthentic = expectedSignature === razorpay_signature;
 
@@ -43,10 +57,13 @@ router.post('/verify-payment', authMiddleware, async (req, res) => {
     const discountApplied = req.body.discountApplied || 0;
     const couponCode = req.body.couponCode || req.session?.couponCode;
     
-    console.log('Items from request body:', req.body.items);
-    console.log('Items from session:', req.session.cartItems);
-    console.log('Total amount from request body:', req.body.totalAmount);
-    console.log('Total amount from session:', req.session.orderAmount);
+    console.log('📦 Processing purchase items:');
+    console.log('📦 Items from request body:', req.body.items);
+    console.log('📦 Items from session:', req.session.cartItems);
+    console.log('📦 Total amount from request body:', req.body.totalAmount);
+    console.log('📦 Total amount from session:', req.session.orderAmount);
+    console.log('📦 Items count:', items.length);
+    console.log('📦 Items details:', items);
     
     // Validate that we have items
     if (!items || items.length === 0) {
@@ -65,14 +82,20 @@ router.post('/verify-payment', authMiddleware, async (req, res) => {
     }
 
     // Fetch actual template data with QR codes
+    console.log('🔄 Processing items to fetch template data...');
     const itemsWithQR = await Promise.all(items.map(async (item) => {
+      console.log('🔄 Processing item:', item);
+      console.log('🔄 Item type:', item.type);
+      console.log('🔄 Item ID:', item.id);
+      
       if (item.type === 'template') {
+        console.log('📹 Processing video template');
         try {
           // Fetch the actual template to get the real QR code
           const Template = (await import('../models/Template.js')).default;
           const template = await Template.findById(item.id);
           if (template) {
-            console.log(`Template found: ID=${template._id}, title=${template.title}`);
+            console.log(`✅ Video template found: ID=${template._id}, title=${template.title}`);
             return {
               ...item,
               templateId: item.id,
@@ -81,9 +104,11 @@ router.post('/verify-payment', authMiddleware, async (req, res) => {
               qrUrl: template.qrUrl, // Use the actual uploaded QR code
               videoUrl: template.videoUrl
             };
+          } else {
+            console.log('❌ Video template not found for ID:', item.id);
           }
         } catch (error) {
-          console.error('Error fetching template:', error);
+          console.error('❌ Error fetching video template:', error);
         }
       } else if (item.type === 'folder') {
         try {
@@ -103,10 +128,59 @@ router.post('/verify-payment', authMiddleware, async (req, res) => {
         } catch (error) {
           console.error('Error fetching folder:', error);
         }
+      } else if (item.type === 'picture-template') {
+        console.log('🖼️ Processing picture template');
+        try {
+          // Fetch the actual picture template to get the real data
+          const PictureTemplate = (await import('../models/PictureTemplate.js')).default;
+          const template = await PictureTemplate.findById(item.id);
+          if (template) {
+            console.log(`✅ Picture template found: ID=${template._id}, title=${template.title}`);
+            return {
+              ...item,
+              templateId: item.id,
+              title: template.title,
+              price: item.price,
+              description: template.description,
+              previewImageUrl: template.previewImageUrl,
+              downloadImageUrl: template.downloadImageUrl
+            };
+          } else {
+            console.log('❌ Picture template not found for ID:', item.id);
+          }
+        } catch (error) {
+          console.error('❌ Error fetching picture template:', error);
+        }
+      } else if (item.type === 'picture-folder') {
+        try {
+          // Fetch the actual picture folder to get the real data
+          const PictureFolder = (await import('../models/PictureFolder.js')).default;
+          const folder = await PictureFolder.findById(item.id);
+          if (folder) {
+            console.log(`Picture folder found: ID=${folder._id}, name=${folder.name}`);
+            return {
+              ...item,
+              folderId: item.id,
+              title: folder.name,
+              price: item.price,
+              description: folder.description
+            };
+          }
+        } catch (error) {
+          console.error('Error fetching picture folder:', error);
+        }
       }
       return item;
     }));
 
+    console.log('💾 Creating purchase record...');
+    console.log('💾 User ID:', req.user.userId);
+    console.log('💾 Payment ID:', razorpay_payment_id);
+    console.log('💾 Order ID:', razorpay_order_id);
+    console.log('💾 Items with QR:', itemsWithQR);
+    console.log('💾 Total amount:', totalAmount);
+    console.log('💾 Discount applied:', discountApplied);
+    
     const purchase = await Purchase.create({
       userId: req.user.userId,
       paymentId: razorpay_payment_id,
@@ -116,8 +190,8 @@ router.post('/verify-payment', authMiddleware, async (req, res) => {
       discountApplied,
     });
 
-    console.log('Purchase created successfully:', purchase._id);
-    console.log('Purchase items with template IDs:', itemsWithQR.map(item => ({ 
+    console.log('✅ Purchase created successfully:', purchase._id);
+    console.log('✅ Purchase items with template IDs:', itemsWithQR.map(item => ({ 
       type: item.type, 
       templateId: item.templateId, 
       id: item.id,
@@ -125,19 +199,43 @@ router.post('/verify-payment', authMiddleware, async (req, res) => {
     })));
 
     // Grant access to purchased items
+    console.log('🔑 Granting access to purchased items...');
     try {
       for (const item of itemsWithQR) {
+        console.log('🔑 Processing access for item:', item);
+        console.log('🔑 Item type:', item.type);
+        console.log('🔑 Item ID:', item.id);
+        console.log('🔑 Template ID:', item.templateId);
+        console.log('🔑 Folder ID:', item.folderId);
+        
         if (item.type === 'template' && item.templateId) {
-          console.log('Granting template access for:', item.templateId);
+          console.log('🔑 Granting video template access for:', item.templateId);
           await grantTemplateAccess(req.user.userId, item.templateId, purchase._id);
+          console.log('✅ Video template access granted');
         } else if (item.type === 'folder' && item.folderId) {
-          console.log('Granting folder access for:', item.folderId);
+          console.log('🔑 Granting video folder access for:', item.folderId);
           await grantFolderAccess(req.user.userId, item.folderId, purchase._id);
+          console.log('✅ Video folder access granted');
+        } else if (item.type === 'picture-template' && item.templateId) {
+          console.log('🔑 Granting picture template access for:', item.templateId);
+          await grantTemplateAccess(req.user.userId, item.templateId, purchase._id);
+          console.log('✅ Picture template access granted');
+        } else if (item.type === 'picture-folder' && item.folderId) {
+          console.log('🔑 Granting picture folder access for:', item.folderId);
+          await grantFolderAccess(req.user.userId, item.folderId, purchase._id);
+          console.log('✅ Picture folder access granted');
+        } else {
+          console.log('⚠️ No access granted for item:', item);
         }
       }
-      console.log('Access granted successfully');
+      console.log('✅ All access granted successfully');
     } catch (accessError) {
-      console.error('Error granting access:', accessError);
+      console.error('❌ Error granting access:', accessError);
+      console.error('❌ Access error details:', {
+        message: accessError.message,
+        stack: accessError.stack,
+        name: accessError.name
+      });
       // Don't fail the payment for access granting issues, but log it
     }
 
@@ -160,13 +258,21 @@ router.post('/verify-payment', authMiddleware, async (req, res) => {
     req.session.discountAmount = undefined;
     req.session.couponCode = undefined;
 
-    console.log('Sending success response with purchaseId:', purchase._id);
+    console.log('✅ Payment verification completed successfully');
+    console.log('✅ Purchase ID:', purchase._id);
+    console.log('✅ Sending success response to frontend');
+    
     return res.json({
       message: 'Payment verification successful',
       purchaseId: purchase._id,
     });
   } catch (err) {
-    console.error('Payment verification error:', err);
+    console.error('❌ Payment verification error:', err);
+    console.error('❌ Error details:', {
+      message: err.message,
+      stack: err.stack,
+      name: err.name
+    });
     return res.status(500).json({ message: 'Server error' });
   }
 });

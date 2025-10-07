@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, FileVideo, Settings, LogOut, Package, DollarSign, BarChart2, Ticket } from 'lucide-react';
+import { LayoutDashboard, Users, FileVideo, Settings, LogOut, Package, DollarSign, BarChart2, Ticket, Image } from 'lucide-react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -26,6 +26,12 @@ const Dashboard = () => {
       icon: <FileVideo className="h-5 w-5" />, 
       path: '/admin/templates',
       badge: '12'
+    },
+    { 
+      name: 'Picture Templates', 
+      icon: <Image className="h-5 w-5" />, 
+      path: '/admin/picture-templates',
+      badge: '8'
     },
     { 
       name: 'Coupons', 

@@ -18,12 +18,6 @@ backend.interceptors.request.use(
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log('Request:', {
-      url: config.url,
-      method: config.method,
-      headers: config.headers,
-      data: config.data,
-    });
     return config;
   },
   (error) => {
@@ -35,11 +29,6 @@ backend.interceptors.request.use(
 // Response interceptor for error handling
 backend.interceptors.response.use(
   (response) => {
-    console.log('Response:', {
-      url: response.config.url,
-      status: response.status,
-      data: response.data,
-    });
     return response;
   },
   (error: AxiosError) => {
@@ -152,6 +141,147 @@ export async function uploadTemplate(data: {
 export async function getAdminStats() {
   const res = await backend.get('/admin/stats')
   return res.data as AdminStats
+}
+
+// Picture Template API Functions
+export async function getPictureHierarchy(folderId?: string) {
+  const res = await backend.get('/picture-content/picture-hierarchy', { params: { folderId } })
+  return res.data as { folders: PictureFolder[]; templates: PictureTemplate[]; path?: PictureFolder[] }
+}
+
+export async function createPictureFolder(name: string, parentId?: string, description?: string, category?: string) {
+  const res = await backend.post('/picture-content/picture-folders', { name, parentId, description, category })
+  return res.data as { folder: PictureFolder }
+}
+
+export async function uploadPictureTemplate(data: {
+  title: string
+  description?: string
+  basePrice: number
+  discountPrice?: number
+  previewImageFile: File
+  downloadImageFile: File
+  parentId?: string
+  category?: string
+  tags?: string[]
+  dimensions?: { width: number; height: number }
+}) {
+  const formData = new FormData()
+  
+  // Append all fields to FormData
+  formData.append('title', data.title)
+  formData.append('basePrice', data.basePrice.toString())
+  
+  if (data.description) {
+    formData.append('description', data.description)
+  }
+  
+  if (data.discountPrice !== undefined) {
+    formData.append('discountPrice', data.discountPrice.toString())
+  }
+  
+  if (data.parentId) {
+    formData.append('parentId', data.parentId)
+  }
+  
+  if (data.category) {
+    formData.append('category', data.category)
+  }
+  
+  if (data.tags && data.tags.length > 0) {
+    formData.append('tags', data.tags.join(','))
+  }
+  
+  if (data.dimensions) {
+    formData.append('dimensions', JSON.stringify(data.dimensions))
+  }
+  
+  // Append files with the correct field names that the backend expects
+  formData.append('previewImage', data.previewImageFile, data.previewImageFile.name)
+  formData.append('downloadImage', data.downloadImageFile, data.downloadImageFile.name)
+  
+  try {
+    const res = await backend.post('/picture-content/picture-templates', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+    })
+    return res.data as { template: PictureTemplate }
+  } catch (error) {
+    console.error('Picture upload error details:', (error as any).response?.data || (error as any).message)
+    throw error
+  }
+}
+
+export async function getPictureTemplate(id: string) {
+  const res = await backend.get(`/picture-content/picture-templates/${id}`)
+  return res.data as { template: PictureTemplate }
+}
+
+export async function updatePictureFolder(id: string, data: { name?: string; parentId?: string; description?: string; category?: string }) {
+  const res = await backend.put(`/picture-content/picture-folders/${id}`, data)
+  return res.data as { folder: PictureFolder }
+}
+
+export async function updatePictureTemplate(id: string, data: {
+  title?: string
+  description?: string
+  basePrice?: number
+  discountPrice?: number
+  folderId?: string
+  category?: string
+  tags?: string[]
+  dimensions?: { width: number; height: number }
+  previewImageFile?: File
+  downloadImageFile?: File
+}) {
+  const formData = new FormData()
+  
+  // Append fields
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== undefined && key !== 'previewImageFile' && key !== 'downloadImageFile') {
+      if (key === 'tags' && Array.isArray(value)) {
+        formData.append(key, value.join(','))
+      } else if (key === 'dimensions' && typeof value === 'object') {
+        formData.append(key, JSON.stringify(value))
+      } else {
+        formData.append(key, value.toString())
+      }
+    }
+  })
+  
+  // Append files if provided
+  if (data.previewImageFile) {
+    formData.append('previewImage', data.previewImageFile, data.previewImageFile.name)
+  }
+  
+  if (data.downloadImageFile) {
+    formData.append('downloadImage', data.downloadImageFile, data.downloadImageFile.name)
+  }
+  
+  try {
+    const res = await backend.put(`/picture-content/picture-templates/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+    })
+    return res.data as { template: PictureTemplate }
+  } catch (error) {
+    console.error('Picture update error details:', (error as any).response?.data || (error as any).message)
+    throw error
+  }
+}
+
+export async function deletePictureFolder(id: string) {
+  const res = await backend.delete(`/picture-content/picture-folders/${id}`)
+  return res.data as { message: string }
+}
+
+export async function deletePictureTemplate(id: string) {
+  const res = await backend.delete(`/picture-content/picture-templates/${id}`)
+  return res.data as { message: string }
 }
 
 // Template Management

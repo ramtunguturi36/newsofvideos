@@ -82,7 +82,6 @@ const TemplatesManager = () => {
     setLoading(true);
     getHierarchy(currentFolderId)
       .then((data) => {
-        console.log('Hierarchy data received:', data);
         setFolders(data.folders || []);
         setTemplates(data.templates || []);
         setPath(data.path || []);

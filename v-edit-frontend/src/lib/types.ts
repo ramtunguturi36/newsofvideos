@@ -109,3 +109,56 @@ export interface FolderPreview {
   templateCount: number;
   templates: TemplateItem[];
 }
+
+// Picture Template Types
+export interface PictureFolder {
+  _id: string;
+  name: string;
+  parentId: string | null;
+  description?: string;
+  basePrice: number;
+  discountPrice?: number;
+  isPurchasable: boolean;
+  thumbnailUrl?: string;
+  previewImageUrl?: string;
+  totalPictures: number;
+  createdBy: string;
+  category: 'photography' | 'graphics' | 'illustrations' | 'templates' | 'other';
+  createdAt: string;
+  updatedAt: string;
+  samplePictures?: PictureTemplate[];
+}
+
+export interface PictureTemplate {
+  _id: string;
+  title: string;
+  description?: string;
+  basePrice: number;
+  discountPrice?: number;
+  previewImageUrl: string;
+  downloadImageUrl: string;
+  folderId: string | null;
+  category: 'photography' | 'graphics' | 'illustrations' | 'templates' | 'other';
+  tags: string[];
+  dimensions?: {
+    width: number;
+    height: number;
+  };
+  fileSize?: number;
+  format: 'jpg' | 'jpeg' | 'png' | 'gif' | 'webp';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PictureFolderPreview {
+  _id: string;
+  name: string;
+  description?: string;
+  basePrice?: number;
+  discountPrice?: number;
+  isPurchasable: boolean;
+  thumbnailUrl?: string;
+  previewImageUrl?: string;
+  pictureCount: number;
+  pictures: PictureTemplate[];
+}

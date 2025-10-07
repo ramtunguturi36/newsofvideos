@@ -38,7 +38,8 @@ import {
   QrCode,
   Phone,
   MapPin,
-  User as UserIcon
+  User as UserIcon,
+  Image
 } from 'lucide-react';
 import { useCart } from "@/context/CartContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -47,8 +48,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import CartDrawer from "@/components/CartDrawer";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getHierarchy } from "@/lib/backend";
-import type { Folder, TemplateItem } from "@/lib/types";
+import { getHierarchy, getPictureHierarchy, backend } from "@/lib/backend";
+import type { Folder, TemplateItem, PictureFolder, PictureTemplate } from "@/lib/types";
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 
@@ -58,6 +59,14 @@ interface ExtendedTemplateItem extends TemplateItem {
 
 interface ExtendedFolder extends Folder {
   // Folder already has all needed properties from the base type
+}
+
+interface ExtendedPictureTemplate extends PictureTemplate {
+  // PictureTemplate already has previewImageUrl, downloadImageUrl, folderId from the base type
+}
+
+interface ExtendedPictureFolder extends PictureFolder {
+  // PictureFolder already has all needed properties from the base type
 }
 
 // Stats card component
@@ -132,6 +141,22 @@ const navItems = [
     category: 'main'
   },
   { 
+    name: 'Picture Templates', 
+    icon: Image, 
+    path: '/picture-templates',
+    description: 'Browse and purchase picture templates',
+    badge: 'New',
+    category: 'main'
+  },
+  { 
+    name: 'Picture Folders', 
+    icon: FolderIcon, 
+    path: '/picture-folders',
+    description: 'Browse and purchase picture collections',
+    badge: 'New',
+    category: 'main'
+  },
+  { 
     name: 'Order History', 
     icon: History, 
     path: '/user/orders',
@@ -151,6 +176,20 @@ const navItems = [
     icon: FolderIcon, 
     path: '/user/folders',
     description: 'Access your purchased folder collections',
+    category: 'purchases'
+  },
+  { 
+    name: 'My Picture Templates', 
+    icon: Image, 
+    path: '/user/picture-templates',
+    description: 'Access your purchased picture templates',
+    category: 'purchases'
+  },
+  { 
+    name: 'My Picture Folders', 
+    icon: FolderIcon, 
+    path: '/user/picture-folders',
+    description: 'Access your purchased picture folder collections',
     category: 'purchases'
   },
   { 
@@ -180,6 +219,12 @@ export default function UserDashboard() {
   const [templates, setTemplates] = useState<ExtendedTemplateItem[]>([]);
   const [path, setPath] = useState<ExtendedFolder[]>([]);
   const [purchasedTemplates, setPurchasedTemplates] = useState<Set<string>>(new Set());
+  
+  // Picture template states
+  const [pictureFolders, setPictureFolders] = useState<ExtendedPictureFolder[]>([]);
+  const [pictureTemplates, setPictureTemplates] = useState<ExtendedPictureTemplate[]>([]);
+  const [picturePath, setPicturePath] = useState<ExtendedPictureFolder[]>([]);
+  const [purchasedPictureTemplates, setPurchasedPictureTemplates] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -204,6 +249,17 @@ export default function UserDashboard() {
   const filteredFolders = folders.filter(folder =>
     folder.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Filter picture templates and folders based on search term
+  const filteredPictureTemplates = pictureTemplates.filter(template =>
+    template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    template.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredPictureFolders = pictureFolders.filter(folder =>
+    folder.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
   
   // Mock user data - replace with actual auth context
   const { user, logout } = useAuth() || { user: { name: 'John Doe', email: 'john@example.com' }, logout: () => {} };
@@ -211,46 +267,87 @@ export default function UserDashboard() {
   
   // Load ownership data on component mount
   useEffect(() => {
-    console.log('UserDashboard mounted, loading ownership data...');
-    console.log('Refresh flag status:', localStorage.getItem('refreshOrders'));
+    console.log('🏠 UserDashboard mounted, loading ownership data...');
+    console.log('🏠 Refresh flag status:', localStorage.getItem('refreshOrders'));
+    console.log('🏠 Search params:', params.toString());
     
     const loadOwnershipData = async () => {
       try {
-        console.log('Fetching purchases for ownership data...');
-        const response = await fetch('/api/purchases', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        const data = await response.json();
-        const purchases = data.purchases || [];
-        console.log('Purchases response:', data);
+        console.log('🔄 Fetching purchases for ownership data...');
+        console.log('🔄 Making API call to /api/purchases');
+        
+        const response = await backend.get('/purchases');
+        
+        console.log('✅ Purchases API response status:', response.status);
+        console.log('✅ Purchases API response data:', response.data);
+        
+        const purchases = response.data.purchases || [];
+        console.log('✅ Purchases array length:', purchases.length);
         
         // Get all unique template IDs from purchases
+        console.log('🔄 Processing purchases to extract template IDs...');
         const templateIds = Array.from(new Set(
-          purchases.flatMap(purchase => 
-            purchase.items
-              .filter((item: any) => item.type === 'template' && item.templateId)
-              .map((item: any) => item.templateId)
-          )
+          purchases.flatMap(purchase => {
+            console.log('🔄 Processing purchase:', purchase._id);
+            console.log('🔄 Purchase items:', purchase.items);
+            return purchase.items
+              .filter((item: any) => {
+                console.log('🔄 Checking item:', item);
+                console.log('🔄 Item type:', item.type);
+                console.log('🔄 Item templateId:', item.templateId);
+                return item.type === 'template' && item.templateId;
+              })
+              .map((item: any) => {
+                console.log('✅ Adding template ID:', item.templateId);
+                return item.templateId;
+              });
+          })
+        ));
+
+        // Get all unique picture template IDs from purchases
+        console.log('🔄 Processing purchases to extract picture template IDs...');
+        const pictureTemplateIds = Array.from(new Set(
+          purchases.flatMap(purchase => {
+            return purchase.items
+              .filter((item: any) => {
+                return item.type === 'picture-template' && item.templateId;
+              })
+              .map((item: any) => {
+                console.log('✅ Adding picture template ID:', item.templateId);
+                return item.templateId;
+              });
+          })
         ));
         
-        console.log('All purchases:', purchases);
-        console.log('Extracted template IDs from purchases:', templateIds);
+        console.log('✅ All purchases processed:', purchases);
+        console.log('✅ Extracted template IDs from purchases:', templateIds);
+        console.log('✅ Template IDs count:', templateIds.length);
+        console.log('✅ Extracted picture template IDs from purchases:', pictureTemplateIds);
+        console.log('✅ Picture template IDs count:', pictureTemplateIds.length);
         
         setPurchasedTemplates(new Set(templateIds));
-        console.log('Initial ownership data loaded:', templateIds);
+        setPurchasedPictureTemplates(new Set(pictureTemplateIds));
+        console.log('✅ Initial ownership data loaded:', templateIds);
+        console.log('✅ Initial picture ownership data loaded:', pictureTemplateIds);
         
         // Check if refresh flag is set and clear it
         if (localStorage.getItem('refreshOrders') === 'true') {
-          console.log('Refresh flag detected on mount, clearing it...');
+          console.log('🔄 Refresh flag detected on mount, clearing it...');
           localStorage.removeItem('refreshOrders');
         }
+        
+        console.log('✅ Ownership data loading completed successfully');
       } catch (err) {
-        console.error('Error loading ownership data:', err);
+        console.error('❌ Error loading ownership data:', err);
+        console.error('❌ Error details:', {
+          message: (err as Error).message,
+          stack: (err as Error).stack,
+          name: (err as Error).name
+        });
       }
     };
-    
+
+    console.log('🚀 Starting loadOwnershipData...');
     loadOwnershipData();
   }, []);
 
@@ -263,13 +360,8 @@ export default function UserDashboard() {
         console.log('Refreshing ownership data after payment...');
         const refreshOwnership = async () => {
           try {
-            const response = await fetch('/api/purchases', {
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-              }
-            });
-            const data = await response.json();
-            const purchases = data.purchases || [];
+            const response = await backend.get('/purchases');
+            const purchases = response.data.purchases || [];
             
             // Get all unique template IDs from purchases
             const templateIds = Array.from(new Set(
@@ -279,9 +371,20 @@ export default function UserDashboard() {
                   .map((item: any) => item.templateId)
               )
             ));
+
+            // Get all unique picture template IDs from purchases
+            const pictureTemplateIds = Array.from(new Set(
+              purchases.flatMap(purchase => 
+                purchase.items
+                  .filter((item: any) => item.type === 'picture-template' && item.templateId)
+                  .map((item: any) => item.templateId)
+              )
+            ));
             
             setPurchasedTemplates(new Set(templateIds));
+            setPurchasedPictureTemplates(new Set(pictureTemplateIds));
             console.log('Ownership data refreshed:', templateIds);
+            console.log('Picture ownership data refreshed:', pictureTemplateIds);
           } catch (err) {
             console.error('Error refreshing ownership data:', err);
           }
@@ -317,6 +420,24 @@ export default function UserDashboard() {
 
     loadData();
   }, [params]);
+
+  // Load picture template contents
+  useEffect(() => {
+    const loadPictureData = async () => {
+      try {
+        const data = await getPictureHierarchy(undefined);
+        
+        
+        setPictureFolders(data.folders as ExtendedPictureFolder[]);
+        setPictureTemplates(data.templates as ExtendedPictureTemplate[]);
+        setPicturePath(data.path || [{ _id: 'root', name: 'Home', parentId: null }]);
+      } catch (error) {
+        console.error('Error loading picture data:', error);
+      }
+    };
+
+    loadPictureData();
+  }, []);
 
   // Check if item is in cart
   const isInCart = (id: string): boolean => {
@@ -707,8 +828,8 @@ export default function UserDashboard() {
             {/* Nested routes will be rendered here */}
             <Outlet />
             
-            {/* Dashboard content (only shown when no folder is selected) */}
-            {!params.get('folderId') && (
+            {/* Dashboard content (only shown when at dashboard route) */}
+            {location.pathname === '/user/dashboard' && !params.get('folderId') && (
               <>
                 {/* Welcome section */}
                 <div className="bg-white backdrop-blur-lg rounded-2xl shadow-lg p-8 border border-slate-200">
@@ -746,43 +867,22 @@ export default function UserDashboard() {
 
 
 
-                {/* Search Bar */}
-                <div className="mb-8">
-                  <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg p-6 border border-slate-200">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-1">
-                        <Input
-                          placeholder="Search videos and templates..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="w-full bg-white border-slate-300 text-slate-900 placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500"
-                        />
-                      </div>
-                      <Button
-                        onClick={() => setSearchTerm('')}
-                        variant="outline"
-                        className="whitespace-nowrap bg-white border-slate-300 text-slate-700 hover:bg-slate-50"
-                      >
-                        Clear
-                      </Button>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Folder Marketplace CTA */}
+
+                {/* Picture Folder Store CTA */}
                 <div className="mb-8 bg-gradient-to-r from-purple-50 to-pink-50 backdrop-blur-lg rounded-2xl p-6 border border-purple-200 shadow-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center mr-4">
-                        <ShoppingCart className="h-6 w-6 text-white" />
+                        <FolderOpen className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-slate-900">Template Collections</h3>
-                        <p className="text-slate-600">Buy entire folder collections at discounted prices</p>
+                        <h3 className="text-xl font-bold text-slate-900">Picture Collections</h3>
+                        <p className="text-slate-600">Buy complete picture collections at discounted prices</p>
                       </div>
                     </div>
                     <Button
-                      onClick={() => navigate('/folders')}
+                      onClick={() => navigate('/picture-folders')}
                       className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
                     >
                       <ShoppingCart className="h-4 w-4 mr-2" />
@@ -791,13 +891,13 @@ export default function UserDashboard() {
                   </div>
                 </div>
 
-                {/* Categories Section - Highlighted */}
+                {/* Video Categories Section - Highlighted */}
                 {filteredFolders.length > 0 && (
                   <div className="mb-8 bg-gradient-to-r from-blue-50 to-cyan-50 backdrop-blur-lg rounded-2xl p-8 border border-blue-200 shadow-lg">
                     <div className="flex items-center justify-between mb-6">
                       <h2 className="text-3xl font-bold text-slate-900 flex items-center">
                         <FolderOpen className="h-8 w-8 mr-3 text-blue-600" />
-                        Categories
+                        Video Categories
                       </h2>
                       <span className="text-sm text-slate-700 bg-white/80 px-4 py-2 rounded-full border border-slate-200">
                         {filteredFolders.length} categories available
@@ -821,37 +921,42 @@ export default function UserDashboard() {
                             <p className="text-sm text-slate-600 mt-1">View templates</p>
                           </div>
                           
-                          {/* Folder Pricing and Add to Cart */}
-                          {folder.isPurchasable && (
-                            <div className="mt-4 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="text-lg font-bold text-slate-900">
-                                  ₹{folder.discountPrice || folder.basePrice}
                                 </div>
-                                {folder.discountPrice && (
-                                  <div className="text-sm text-slate-500 line-through">
-                                    ₹{folder.basePrice}
+                      ))}
+                    </div>
                                   </div>
                                 )}
+
+                {/* Picture Categories Section - Highlighted */}
+                {filteredPictureFolders.length > 0 && (
+                  <div className="mb-8 bg-gradient-to-r from-purple-50 to-pink-50 backdrop-blur-lg rounded-2xl p-8 border border-purple-200 shadow-lg">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-3xl font-bold text-slate-900 flex items-center">
+                        <Image className="h-8 w-8 mr-3 text-purple-600" />
+                        Picture Categories
+                      </h2>
+                      <span className="text-sm text-slate-700 bg-white/80 px-4 py-2 rounded-full border border-slate-200">
+                        {filteredPictureFolders.length} categories available
+                      </span>
                               </div>
-                              <Button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  addItem({
-                                    id: folder._id,
-                                    type: 'folder',
-                                    title: folder.name,
-                                    price: folder.discountPrice || folder.basePrice
-                                  });
-                                  toast.success('Added to cart');
-                                }}
-                                className="w-full text-sm py-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600"
-                              >
-                                <ShoppingCart className="h-4 w-4 mr-2" />
-                                Add to Cart
-                              </Button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                      {filteredPictureFolders.map((folder) => (
+                        <div
+                          key={folder._id}
+                          className="group p-6 rounded-2xl border border-slate-200 hover:border-purple-300 hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-lg text-left hover:bg-white/90 transform hover:-translate-y-1"
+                        >
+                          {/* Clickable area for navigation */}
+                          <div 
+                            onClick={() => navigate('/picture-templates')}
+                            className="cursor-pointer"
+                          >
+                            <div className="h-16 w-16 rounded-2xl bg-gradient-to-r from-purple-100 to-pink-100 flex items-center justify-center text-purple-600 mb-4 group-hover:from-purple-200 group-hover:to-pink-200 transition-all duration-300 group-hover:scale-110">
+                              <Image className="h-8 w-8" />
                             </div>
-                          )}
+                            <h3 className="font-semibold text-slate-900 group-hover:text-purple-700 text-lg">{folder.name}</h3>
+                            <p className="text-sm text-slate-600 mt-1">View pictures</p>
+                          </div>
+                          
                         </div>
                       ))}
                     </div>
@@ -863,7 +968,7 @@ export default function UserDashboard() {
                   <div className="mb-8">
                     <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
                       <Video className="h-6 w-6 mr-2 text-indigo-600" />
-                      Templates
+                      Video Templates
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
                       {filteredTemplates.map((template) => (
@@ -871,8 +976,7 @@ export default function UserDashboard() {
                           key={template._id}
                           className="group bg-white/80 backdrop-blur-lg rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-lg transition-all duration-300 overflow-hidden transform hover:-translate-y-1 hover:bg-white/90"
                         >
-                          <div className="relative aspect-[4/3] bg-black overflow-hidden cursor-pointer"
-                               onClick={() => openVideoModal(template.videoUrl)}>
+                          <div className="relative aspect-[4/3] bg-black overflow-hidden">
                             {template.videoUrl ? (
                               <>
                                 <video
@@ -881,6 +985,8 @@ export default function UserDashboard() {
                                   muted
                                   loop
                                   playsInline
+                                  controls
+                                  preload="metadata"
                                   onMouseEnter={(e) => {
                                     e.currentTarget.currentTime = 0;
                                     e.currentTarget.play();
@@ -890,12 +996,16 @@ export default function UserDashboard() {
                                     e.currentTarget.currentTime = 0;
                                   }}
                                 />
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                    <div className="bg-white/90 rounded-full p-2 shadow-lg">
-                                      <Eye className="h-4 w-4 text-gray-700" />
-                                    </div>
-                                  </div>
+                                <div className="absolute top-2 right-2">
+                                  <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    className="bg-white/90 hover:bg-white text-gray-700 shadow-lg"
+                                    onClick={() => openVideoModal(template.videoUrl)}
+                                  >
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    View
+                                  </Button>
                                 </div>
                               </>
                             ) : (
@@ -904,12 +1014,6 @@ export default function UserDashboard() {
                                   <Video className="h-8 w-8 text-gray-400 mx-auto mb-1" />
                                   <span className="text-gray-400 text-xs">No preview</span>
                                 </div>
-                              </div>
-                            )}
-                            {purchasedTemplates.has(template._id) && (
-                              <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-medium px-1.5 py-0.5 rounded-full shadow-lg">
-                                <CheckCircle className="h-2.5 w-2.5 inline mr-1" />
-                                Purchased
                               </div>
                             )}
                             <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
@@ -932,38 +1036,97 @@ export default function UserDashboard() {
                             </div>
                             
                             {/* Action Buttons */}
-                            {purchasedTemplates.has(template._id) ? (
-                              <div className="space-y-1">
                                 <Button
                                   size="sm"
-                                  className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 text-xs py-1.5"
-                                  onClick={() => openVideoModal(template.videoUrl)}
+                              disabled={isInCart(template._id)}
+                              onClick={() => handleAddToCart(template)}
+                              className="w-full text-xs py-1.5"
                                 >
-                                  <Eye className="h-3 w-3 mr-1" />
-                                  View Video
+                              {isInCart(template._id) ? 'In Cart' : 'Add to Cart'}
                                 </Button>
-                                {template.qrUrl && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="w-full bg-white border-slate-300 text-slate-700 hover:bg-slate-50 text-xs py-1.5"
-                                    onClick={() => openQRModal(template.qrUrl, template.title)}
-                                  >
-                                    <QrCode className="h-3 w-3 mr-1" />
-                                    View QR
-                                  </Button>
-                                )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Picture Templates Grid */}
+                {filteredPictureTemplates.length > 0 && (
+                  <div className="mb-8">
+                    <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+                      <Image className="h-6 w-6 mr-2 text-purple-600" />
+                      Picture Templates
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+                      {filteredPictureTemplates.map((template) => (
+                        <div
+                          key={template._id}
+                          className="group bg-white/80 backdrop-blur-lg rounded-xl border border-slate-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300 overflow-hidden transform hover:-translate-y-1 hover:bg-white/90"
+                        >
+                          <div className="relative aspect-[4/3] bg-black overflow-hidden cursor-pointer"
+                               onClick={() => window.open(template.previewImageUrl, '_blank')}>
+                            {template.previewImageUrl ? (
+                              <>
+                                <img
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  src={template.previewImageUrl}
+                                  alt={template.title}
+                                />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <div className="bg-white/90 rounded-full p-2 shadow-lg">
+                                      <Eye className="h-4 w-4 text-gray-700" />
                               </div>
+                                  </div>
+                                </div>
+                              </>
                             ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
+                                <div className="text-center">
+                                  <Image className="h-8 w-8 text-gray-400 mx-auto mb-1" />
+                                  <span className="text-gray-400 text-xs">No preview</span>
+                                </div>
+                              </div>
+                            )}
+                            <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
+                              Picture
+                            </div>
+                          </div>
+                          <div className="p-3">
+                            <h3 className="font-semibold text-slate-900 mb-1 line-clamp-1 text-sm">
+                              {template.title}
+                            </h3>
+                            <div className="mb-2">
+                              <span className="text-sm font-bold text-green-400">
+                                ₹{template.discountPrice || template.basePrice}
+                              </span>
+                              {template.discountPrice && (
+                                <span className="ml-1 text-xs text-slate-500 line-through">
+                                  ₹{template.basePrice}
+                                </span>
+                              )}
+                            </div>
+                            
+                            {/* Action Buttons */}
                               <Button
                                 size="sm"
                                 disabled={isInCart(template._id)}
-                                onClick={() => handleAddToCart(template)}
+                              onClick={() => {
+                                if (!addItem) return;
+                                addItem({
+                                  id: template._id,
+                                  type: 'picture-template',
+                                  title: template.title,
+                                  price: template.discountPrice || template.basePrice,
+                                  data: template
+                                });
+                                toast.success('Added to cart');
+                              }}
                                 className="w-full text-xs py-1.5"
                               >
                                 {isInCart(template._id) ? 'In Cart' : 'Add to Cart'}
                               </Button>
-                            )}
                           </div>
                         </div>
                       ))}
@@ -1025,37 +1188,6 @@ export default function UserDashboard() {
                               </span>
                             </div>
                             
-                            {/* Folder Pricing and Add to Cart */}
-                            {folder.isPurchasable && (
-                              <div className="mt-4 space-y-2 w-full">
-                                <div className="flex items-center justify-between">
-                                  <div className="text-lg font-bold text-slate-900">
-                                    ₹{folder.discountPrice || folder.basePrice}
-                                  </div>
-                                  {folder.discountPrice && (
-                                    <div className="text-sm text-slate-500 line-through">
-                                      ₹{folder.basePrice}
-                                    </div>
-                                  )}
-                                </div>
-                                <Button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    addItem({
-                                      id: folder._id,
-                                      type: 'folder',
-                                      title: folder.name,
-                                      price: folder.discountPrice || folder.basePrice
-                                    });
-                                    toast.success('Added to cart');
-                                  }}
-                                  className="w-full text-sm py-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600"
-                                >
-                                  <ShoppingCart className="h-4 w-4 mr-2" />
-                                  Add to Cart
-                                </Button>
-                              </div>
-                            )}
                           </div>
                         </div>
                       ))}
@@ -1085,15 +1217,21 @@ export default function UserDashboard() {
                                   muted
                                   loop
                                   playsInline
+                                  controls
+                                  preload="metadata"
                                   onMouseEnter={(e) => e.currentTarget.play()}
                                   onMouseLeave={(e) => e.currentTarget.pause()}
                                 />
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                    <div className="bg-white/90 rounded-full p-3 shadow-lg">
-                                      <Eye className="h-6 w-6 text-gray-700" />
-                                    </div>
-                                  </div>
+                                <div className="absolute top-2 right-2">
+                                  <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    className="bg-white/90 hover:bg-white text-gray-700 shadow-lg"
+                                    onClick={() => openVideoModal(template.videoUrl)}
+                                  >
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    View
+                                  </Button>
                                 </div>
                               </>
                             ) : (
@@ -1104,12 +1242,6 @@ export default function UserDashboard() {
                                   </div>
                                   <span className="text-gray-500 text-sm">No preview</span>
                                 </div>
-                              </div>
-                            )}
-                            {purchasedTemplates.has(template._id) && (
-                              <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-medium px-2 py-1 rounded-full shadow-lg">
-                                <CheckCircle className="h-3 w-3 inline mr-1" />
-                                Purchased
                               </div>
                             )}
                             <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
@@ -1137,18 +1269,10 @@ export default function UserDashboard() {
                               <Button
                                 size="sm"
                                 disabled={isInCart(template._id)}
-                                onClick={() => purchasedTemplates.has(template._id) 
-                                  ? navigate(`/user/purchased`) 
-                                  : handleAddToCart(template)
-                                }
+                                onClick={() => handleAddToCart(template)}
                                 className="whitespace-nowrap bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300"
-                                variant={purchasedTemplates.has(template._id) ? "outline" : "default"}
                               >
-                                {isInCart(template._id)
-                                  ? 'In Cart'
-                                  : purchasedTemplates.has(template._id)
-                                  ? 'View QR'
-                                  : 'Add to Cart'}
+                                {isInCart(template._id) ? 'In Cart' : 'Add to Cart'}
                               </Button>
                             </div>
                           </div>

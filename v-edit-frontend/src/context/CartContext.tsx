@@ -3,6 +3,8 @@ import React, { createContext, useContext, useMemo, useState } from 'react'
 export type CartItem =
   | { id: string; type: 'template'; title: string; price: number }
   | { id: string; type: 'folder'; title: string; price: number }
+  | { id: string; type: 'picture-template'; title: string; price: number }
+  | { id: string; type: 'picture-folder'; title: string; price: number }
 
 type CartContextType = {
   items: CartItem[]
@@ -13,7 +15,7 @@ type CartContextType = {
   discount: number
   setDiscount: (amount: number) => void
   addItem: (item: CartItem) => void
-  removeItem: (id: string, type: 'template' | 'folder') => void
+  removeItem: (id: string, type: 'template' | 'folder' | 'picture-template' | 'picture-folder') => void
   clear: () => void
   subtotal: number
   total: number
@@ -40,7 +42,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
-  function removeItem(id: string, type: 'template' | 'folder') {
+  function removeItem(id: string, type: 'template' | 'folder' | 'picture-template' | 'picture-folder') {
     setItems((prev) => prev.filter((i) => !(i.id === id && i.type === type)))
   }
 

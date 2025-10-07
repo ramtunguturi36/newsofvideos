@@ -10,7 +10,7 @@ import { Ticket, X } from 'lucide-react';
 
 interface CartItem {
   id: string;
-  type: 'template' | 'folder';
+  type: 'template' | 'folder' | 'picture-template' | 'picture-folder';
   title: string;
   price: number;
 }
@@ -87,19 +87,30 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
   }
 
   async function handleCheckout() {
-    if (!items.length) return;
+    console.log('🛒 Starting checkout process...');
+    console.log('🛒 Cart items:', items);
+    console.log('🛒 Items count:', items.length);
+    
+    if (!items.length) {
+      console.log('❌ No items in cart, returning');
+      return;
+    }
+    
     setLoading(true);
+    console.log('🔄 Setting loading to true');
 
     try {
       // Check authentication
       const token = localStorage.getItem('token');
+      console.log('🔐 Token exists:', !!token);
       if (!token) {
+        console.log('❌ No token found, redirecting to login');
         navigate('/login', { state: { from: '/cart' } });
         return;
       }
 
       // Create order
-      const response = await backend.post<{ success: boolean; data: CheckoutResponse }>('/payments/checkout', {
+      const checkoutData = {
         items: items.map(item => ({
           id: item.id,
           type: item.type,
@@ -107,29 +118,54 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
           title: item.title
         })),
         couponCode: appliedCoupon ? couponCode : undefined
-      });
+      };
       
-      const checkoutData = response.data.data;
+      console.log('🔄 Sending checkout request with data:', checkoutData);
+      console.log('🔄 Making API call to /payments/checkout');
+      
+      const response = await backend.post<{ success: boolean; data: CheckoutResponse }>('/payments/checkout', checkoutData);
+      
+      console.log('✅ Checkout API response received');
+      console.log('✅ Response status:', response.status);
+      console.log('✅ Response data:', response.data);
+      
+      const checkoutResponseData = response.data.data;
+      console.log('✅ Checkout response data:', checkoutResponseData);
 
       // Load Razorpay SDK if not loaded
+      console.log('🔄 Checking Razorpay SDK...');
       if (!window.Razorpay) {
+        console.log('🔄 Loading Razorpay SDK...');
         const script = document.createElement('script');
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
         await new Promise<void>((resolve, reject) => {
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error('Failed to load Razorpay'));
+          script.onload = () => {
+            console.log('✅ Razorpay SDK loaded successfully');
+            resolve();
+          };
+          script.onerror = () => {
+            console.log('❌ Failed to load Razorpay SDK');
+            reject(new Error('Failed to load Razorpay'));
+          };
           document.body.appendChild(script);
         });
+      } else {
+        console.log('✅ Razorpay SDK already loaded');
       }
 
       // Initialize Razorpay checkout
+      console.log('🔄 Initializing Razorpay checkout...');
+      console.log('🔄 Razorpay key:', import.meta.env.VITE_RAZORPAY_KEY_ID ? 'Present' : 'Missing');
+      console.log('🔄 Amount:', checkoutResponseData.amount);
+      console.log('🔄 Currency:', checkoutResponseData.currency);
+      
       const rzp = new window.Razorpay({
         key: import.meta.env.VITE_RAZORPAY_KEY_ID || '',
-        amount: checkoutData.amount,
-        currency: checkoutData.currency || 'INR',
+        amount: checkoutResponseData.amount,
+        currency: checkoutResponseData.currency || 'INR',
         name: 'V-Edit Marketplace',
         description: 'Purchase Templates',
-        order_id: checkoutData.orderId,
+        order_id: checkoutResponseData.orderId,
         prefill: {
           name: localStorage.getItem('userName') || '',
           email: localStorage.getItem('userEmail') || ''
@@ -139,31 +175,48 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
         },
         handler: async (response: RazorpayResponse) => {
           try {
-            console.log('Payment response received:', response);
-            console.log('Verifying payment...');
+            console.log('🎉 Payment response received:', response);
+            console.log('🎉 Payment ID:', response.razorpay_payment_id);
+            console.log('🎉 Order ID:', response.razorpay_order_id);
+            console.log('🎉 Signature:', response.razorpay_signature);
+            console.log('🔄 Verifying payment...');
             
-            const verifyRes = await backend.post('/verify-payment', {
+            const verificationData = {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
               razorpay_signature: response.razorpay_signature,
               items: items,
               totalAmount: items.reduce((sum, item) => sum + item.price, 0),
               discountApplied: 0 // Add your discount logic here if needed
-            });
+            };
+            
+            console.log('🔄 Sending verification request with data:', verificationData);
+            
+            const verifyRes = await backend.post('/verify-payment', verificationData);
 
-            console.log('Payment verification response:', verifyRes.data);
+            console.log('✅ Payment verification response received');
+            console.log('✅ Verification status:', verifyRes.status);
+            console.log('✅ Verification data:', verifyRes.data);
 
             if (verifyRes.data.purchaseId) {
-              console.log('Payment successful, navigating to success page...');
+              console.log('✅ Payment successful, navigating to success page...');
+              console.log('✅ Purchase ID:', verifyRes.data.purchaseId);
+              console.log('✅ Clearing cart and closing drawer...');
               clear();
               onClose();
+              console.log('✅ Navigating to payment success page...');
               navigate(`/payment-success?purchaseId=${verifyRes.data.purchaseId}`);
             } else {
-              console.error('No purchaseId in response:', verifyRes.data);
+              console.error('❌ No purchaseId in response:', verifyRes.data);
               alert('Payment verification failed. Please contact support.');
             }
           } catch (err) {
-            console.error('Payment verification failed:', err);
+            console.error('❌ Payment verification failed:', err);
+            console.error('❌ Error details:', {
+              message: (err as Error).message,
+              stack: (err as Error).stack,
+              name: (err as Error).name
+            });
             alert('Payment verification failed. Please contact support.');
           }
         }

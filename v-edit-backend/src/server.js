@@ -19,6 +19,7 @@ import verifyPaymentRoutes from './routes/verify-payment.js';
 import purchaseRoutes from './routes/purchases.js';
 import couponRoutes from './routes/coupons.js';
 import folderRoutes from './routes/folders.js';
+import pictureContentRoutes from './routes/pictureContent.js';
 
 const app = express()
 app.use(cors({
@@ -71,6 +72,7 @@ app.use('/api', verifyPaymentRoutes); // This will handle /api/verify-payment
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/folders', folderRoutes);
+app.use('/api/picture-content', pictureContentRoutes);
 
 app.get('/health', (req, res) => res.json({ ok: true }))
 

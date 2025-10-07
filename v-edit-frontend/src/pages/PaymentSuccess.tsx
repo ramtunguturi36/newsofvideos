@@ -8,12 +8,14 @@ import { motion } from 'framer-motion'
 
 type PurchaseItem = {
   id: string
-  type: 'template' | 'folder'
+  type: 'template' | 'folder' | 'picture-template' | 'picture-folder'
   title: string
   description?: string
   price: number
   videoUrl?: string
   qrUrl?: string
+  previewImageUrl?: string
+  downloadImageUrl?: string
   templateId?: string
   folderId?: string
 }
@@ -49,29 +51,39 @@ export default function PaymentSuccess() {
     const searchParams = new URLSearchParams(location.search)
     const purchaseId = searchParams.get('purchaseId')
     
-    console.log('PaymentSuccess page loaded, purchaseId:', purchaseId);
+    console.log('🔍 PaymentSuccess page loaded');
+    console.log('🔍 URL search params:', location.search);
+    console.log('🔍 PurchaseId from URL:', purchaseId);
+    console.log('🔍 Current location:', location.pathname);
     
     if (!purchaseId) {
-      console.log('No purchaseId found, redirecting to explorer');
+      console.log('❌ No purchaseId found, redirecting to explorer');
       navigate('/user/explorer')
       return
     }
 
     async function fetchPurchase() {
       try {
-        console.log('Fetching purchase details for ID:', purchaseId);
+        console.log('🚀 Starting fetchPurchase for ID:', purchaseId);
+        console.log('🚀 Making API call to /purchases/' + purchaseId);
+        
         // Fetch purchase details using direct endpoint
         const purchaseRes = await backend.get(`/purchases/${purchaseId}`)
-        console.log('Purchase response:', purchaseRes.data);
+        console.log('✅ Purchase API response received');
+        console.log('✅ Response status:', purchaseRes.status);
+        console.log('✅ Response data:', purchaseRes.data);
+        
         const purchaseData = purchaseRes.data.purchase as Purchase
         
         if (!purchaseData) {
+          console.log('❌ Purchase data is null/undefined');
           throw new Error('Purchase not found')
         }
         
-        console.log('Purchase data:', purchaseData);
-        console.log('Total amount:', purchaseData.totalAmount);
-        console.log('Items:', purchaseData.items);
+        console.log('✅ Purchase data found:', purchaseData);
+        console.log('✅ Total amount:', purchaseData.totalAmount);
+        console.log('✅ Items count:', purchaseData.items?.length);
+        console.log('✅ Items details:', purchaseData.items);
         
         setPurchase(purchaseData)
         
@@ -80,11 +92,18 @@ export default function PaymentSuccess() {
         localStorage.setItem('refreshOrders', 'true')
         
         // Process both template and folder items
+        console.log('🔄 Processing items for templates...');
         const allTemplates: TemplateItem[] = []
         
         for (const item of purchaseData.items) {
+          console.log('🔄 Processing item:', item);
+          console.log('🔄 Item type:', item.type);
+          console.log('🔄 Item ID:', item.id);
+          console.log('🔄 Item title:', item.title);
+          
           if (item.type === 'template') {
-            // Direct template purchase
+            console.log('📹 Processing video template');
+            // Direct video template purchase
             allTemplates.push({
               _id: item.templateId || item.id,
               title: item.title,
@@ -94,8 +113,10 @@ export default function PaymentSuccess() {
               qrUrl: item.qrUrl,
               videoUrl: item.videoUrl
             })
+            console.log('✅ Video template added to allTemplates');
           } else if (item.type === 'folder') {
-            // Folder purchase - fetch all templates in the folder
+            console.log('📁 Processing video folder');
+            // Video folder purchase - fetch all templates in the folder
             try {
               const folderResponse = await backend.get(`/folders/${item.folderId || item.id}/preview`)
               const folderData = folderResponse.data.data
@@ -115,14 +136,58 @@ export default function PaymentSuccess() {
             } catch (error) {
               console.error('Error fetching folder templates:', error)
             }
+          } else if (item.type === 'picture-template') {
+            console.log('🖼️ Processing picture template');
+            // Direct picture template purchase
+            allTemplates.push({
+              _id: item.templateId || item.id,
+              title: item.title,
+              description: item.description || '',
+              basePrice: item.price,
+              discountPrice: item.price,
+              qrUrl: item.downloadImageUrl || '', // Use download image as "QR" for pictures
+              videoUrl: item.previewImageUrl || '' // Use preview image as "video" for pictures
+            })
+            console.log('✅ Picture template added to allTemplates');
+          } else if (item.type === 'picture-folder') {
+            console.log('📁 Processing picture folder');
+            // Picture folder purchase - fetch all picture templates in the folder
+            try {
+              const folderResponse = await backend.get(`/picture-content/picture-hierarchy?folderId=${item.folderId || item.id}`)
+              const folderData = folderResponse.data
+              
+              if (folderData.templates && folderData.templates.length > 0) {
+                const folderTemplates = folderData.templates.map((template: any) => ({
+                  _id: template._id,
+                  title: template.title,
+                  description: template.description || '',
+                  basePrice: template.basePrice,
+                  discountPrice: template.discountPrice,
+                  qrUrl: template.downloadImageUrl || '', // Use download image as "QR" for pictures
+                  videoUrl: template.previewImageUrl || '' // Use preview image as "video" for pictures
+                }))
+                allTemplates.push(...folderTemplates)
+              }
+            } catch (error) {
+              console.error('Error fetching picture folder templates:', error)
+            }
           }
         }
         
+        console.log('✅ All templates processed. Total count:', allTemplates.length);
+        console.log('✅ Final templates array:', allTemplates);
         setTemplates(allTemplates)
+        console.log('✅ PaymentSuccess data loading completed successfully');
       } catch (err: unknown) {
-        console.error('Error fetching purchase details:', err);
+        console.error('❌ Error fetching purchase details:', err);
+        console.error('❌ Error details:', {
+          message: (err as Error).message,
+          stack: (err as Error).stack,
+          name: (err as Error).name
+        });
         navigate('/user/explorer');
       } finally {
+        console.log('🏁 Setting loading to false');
         setLoading(false)
       }
     }
