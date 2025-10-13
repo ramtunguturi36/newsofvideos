@@ -35,6 +35,7 @@ app.use(cors({
     const allowedOrigins = [
       'http://localhost:5173',
       'https://newsofvideos.onrender.com',
+      'https://newsofvideos.vercel.app',
       process.env.FRONTEND_URL
     ].filter(Boolean); // Remove any undefined values
     
