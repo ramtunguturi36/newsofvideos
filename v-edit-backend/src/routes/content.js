@@ -141,6 +141,59 @@ router.put('/folders/:id', authMiddleware, roleMiddleware(['admin']), async (req
   }
 })
 
+// Upload cover photo for folder
+router.post('/folders/:id/cover-photo', authMiddleware, roleMiddleware(['admin']), upload.single('coverPhoto'), async (req, res) => {
+  try {
+    const { id } = req.params
+    const coverPhotoFile = req.file
+    
+    if (!coverPhotoFile) {
+      return res.status(400).json({ message: 'Cover photo file is required' })
+    }
+    
+    // Validate file type
+    const validImageTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp']
+    if (!validImageTypes.includes(coverPhotoFile.mimetype)) {
+      return res.status(400).json({ message: 'Invalid file type. Please upload a valid image file.' })
+    }
+    
+    const folder = await Folder.findById(id)
+    if (!folder) {
+      return res.status(404).json({ message: 'Folder not found' })
+    }
+    
+    const bucket = process.env.R2_BUCKET
+    const ts = Date.now()
+    const coverPhotoKey = `folder-covers/${ts}-${coverPhotoFile.originalname}`
+    
+    const coverPhotoUrl = await uploadToR2({
+      bucket,
+      key: coverPhotoKey,
+      contentType: coverPhotoFile.mimetype,
+      body: coverPhotoFile.buffer
+    })
+    
+    // Update folder with cover photo URL
+    const updatedFolder = await Folder.findByIdAndUpdate(
+      id,
+      { coverPhotoUrl },
+      { new: true }
+    )
+    
+    return res.json({ 
+      success: true,
+      folder: updatedFolder,
+      message: 'Cover photo uploaded successfully' 
+    })
+  } catch (err) {
+    console.error('Cover photo upload error:', err)
+    return res.status(500).json({ 
+      message: 'Server error',
+      error: err.message 
+    })
+  }
+})
+
 // Delete folder
 router.delete('/folders/:id', authMiddleware, roleMiddleware(['admin']), async (req, res) => {
   try {

@@ -12,6 +12,7 @@ const folderSchema = new Schema(
     isPurchasable: { type: Boolean, default: false }, // Admin can enable folder purchase
     thumbnailUrl: { type: String }, // Folder preview image
     previewVideoUrl: { type: String }, // Optional preview video for the folder
+    coverPhotoUrl: { type: String }, // Cover photo for the folder
     totalTemplates: { type: Number, default: 0 }, // Auto-calculated
     createdBy: { type: Types.ObjectId, ref: 'User', required: true },
   },

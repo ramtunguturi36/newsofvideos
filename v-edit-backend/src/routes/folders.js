@@ -47,7 +47,8 @@ router.put('/:id/pricing', authenticateToken, requireAdmin, async (req, res) => 
       isPurchasable,
       description,
       thumbnailUrl,
-      previewVideoUrl
+      previewVideoUrl,
+      coverPhotoUrl
     } = req.body;
 
     const folder = await Folder.findById(id);
@@ -81,6 +82,7 @@ router.put('/:id/pricing', authenticateToken, requireAdmin, async (req, res) => 
     if (description !== undefined) updateData.description = description;
     if (thumbnailUrl !== undefined) updateData.thumbnailUrl = thumbnailUrl;
     if (previewVideoUrl !== undefined) updateData.previewVideoUrl = previewVideoUrl;
+    if (coverPhotoUrl !== undefined) updateData.coverPhotoUrl = coverPhotoUrl;
 
     // Update template count
     updateData.totalTemplates = await Template.countDocuments({ folderId: folder._id });
@@ -229,7 +231,10 @@ router.get('/user/purchased', authenticateToken, async (req, res) => {
     const folderAccesses = await UserAccess.find({
       userId,
       accessType: 'folder'
-    }).populate('folderId');
+    }).populate({
+      path: 'folderId',
+      select: '_id name description coverPhotoUrl thumbnailUrl'
+    });
 
     // Get folder details and templates for each purchased folder
     const purchasedFolders = await Promise.all(
@@ -242,13 +247,17 @@ router.get('/user/purchased', authenticateToken, async (req, res) => {
           _id: { $in: access.includedTemplates }
         }).select('title description basePrice discountPrice videoUrl qrUrl');
 
-        return {
+        const folderData = {
           _id: folder._id,
           name: folder.name,
           description: folder.description,
           purchaseDate: access.grantedAt,
-          templates: templates
+          templates: templates,
+          coverPhotoUrl: folder.coverPhotoUrl || null,
+          thumbnailUrl: folder.thumbnailUrl || null
         };
+        console.log('Folder data being sent:', folderData);
+        return folderData;
       })
     );
 

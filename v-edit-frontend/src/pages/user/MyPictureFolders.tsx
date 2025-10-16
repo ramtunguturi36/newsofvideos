@@ -284,14 +284,28 @@ const MyPictureFolders = () => {
             <Card key={folder._id} className="group bg-white/80 backdrop-blur-lg border border-slate-200 hover:border-purple-300 hover:shadow-xl transition-all duration-300 overflow-hidden">
               {viewMode === 'grid' ? (
                 <>
-                  <div className="relative aspect-[4/3] bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center cursor-pointer"
+                  <div className="relative aspect-[4/3] bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center cursor-pointer overflow-hidden"
                        onClick={() => openFolder(folder)}>
-                    <div className="text-center">
-                      <FolderOpen className="h-16 w-16 text-purple-600 mx-auto mb-2 group-hover:scale-110 transition-transform duration-300" />
-                      <div className="text-sm text-purple-700 font-medium">
-                        {folder.totalPictures || 0} Pictures
+                    {folder.coverPhotoUrl ? (
+                      <img 
+                        src={folder.coverPhotoUrl} 
+                        alt={folder.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : folder.thumbnailUrl ? (
+                      <img 
+                        src={folder.thumbnailUrl} 
+                        alt={folder.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-center">
+                        <FolderOpen className="h-16 w-16 text-purple-600 mx-auto mb-2 group-hover:scale-110 transition-transform duration-300" />
+                        <div className="text-sm text-purple-700 font-medium">
+                          {folder.totalPictures || 0} Pictures
+                        </div>
                       </div>
-                    </div>
+                    )}
                     <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-medium px-2 py-1 rounded-full shadow-lg">
                       <CheckCircle className="h-3 w-3 inline mr-1" />
                       Owned

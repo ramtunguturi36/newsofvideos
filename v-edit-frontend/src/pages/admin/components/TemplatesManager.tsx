@@ -20,7 +20,7 @@ import {
 import { useCart } from '@/context/CartContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import type { Folder, TemplateItem } from '@/lib/backend';
-import { Plus, Upload, Folder as FolderIcon, FileVideo, X, Edit, Trash2, Move, MoreVertical, DollarSign, ShoppingCart, Settings } from 'lucide-react';
+import { Plus, Upload, Folder as FolderIcon, FileVideo, X, Edit, Trash2, Move, MoreVertical, DollarSign, ShoppingCart, Settings, Image as ImageIcon } from 'lucide-react';
 
 // ... (FolderCard and TemplateCard components remain the same as in AdminExplorer.tsx)
 
@@ -74,8 +74,11 @@ const TemplatesManager = () => {
     isPurchasable: false,
     description: '',
     thumbnailUrl: '',
-    previewVideoUrl: ''
+    previewVideoUrl: '',
+    coverPhotoUrl: ''
   });
+  const [coverPhotoFile, setCoverPhotoFile] = useState<File | null>(null);
+  const [isUploadingCoverPhoto, setIsUploadingCoverPhoto] = useState(false);
 
   useEffect(() => {
     setParentId(currentFolderId);
@@ -310,7 +313,8 @@ const TemplatesManager = () => {
       isPurchasable: folder.isPurchasable || false,
       description: folder.description || '',
       thumbnailUrl: folder.thumbnailUrl || '',
-      previewVideoUrl: folder.previewVideoUrl || ''
+      previewVideoUrl: folder.previewVideoUrl || '',
+      coverPhotoUrl: folder.coverPhotoUrl || ''
     });
     setFolderPricingOpen(true);
   }
@@ -320,13 +324,24 @@ const TemplatesManager = () => {
     if (!selectedFolderForPricing) return;
 
     try {
+      // First upload cover photo if provided
+      let coverPhotoUrl = folderPricingData.coverPhotoUrl;
+      if (coverPhotoFile) {
+        setIsUploadingCoverPhoto(true);
+        const { uploadFolderCoverPhoto } = await import('@/lib/backend');
+        const uploadResult = await uploadFolderCoverPhoto(selectedFolderForPricing._id, coverPhotoFile);
+        coverPhotoUrl = uploadResult.folder.coverPhotoUrl;
+        setIsUploadingCoverPhoto(false);
+      }
+
       const updateData = {
         basePrice: parseFloat(folderPricingData.basePrice) || 0,
         discountPrice: folderPricingData.discountPrice ? parseFloat(folderPricingData.discountPrice) : undefined,
         isPurchasable: folderPricingData.isPurchasable,
         description: folderPricingData.description || undefined,
         thumbnailUrl: folderPricingData.thumbnailUrl || undefined,
-        previewVideoUrl: folderPricingData.previewVideoUrl || undefined
+        previewVideoUrl: folderPricingData.previewVideoUrl || undefined,
+        coverPhotoUrl: coverPhotoUrl || undefined
       };
 
       // Import the API function dynamically to avoid circular import
@@ -335,6 +350,7 @@ const TemplatesManager = () => {
       
       setFolderPricingOpen(false);
       setSelectedFolderForPricing(null);
+      setCoverPhotoFile(null);
       
       // Refresh the list
       const data = await getHierarchy(currentFolderId);
@@ -342,6 +358,7 @@ const TemplatesManager = () => {
     } catch (error) {
       console.error('Error updating folder pricing:', error);
       alert('Failed to update folder pricing');
+      setIsUploadingCoverPhoto(false);
     }
   }
 
@@ -404,7 +421,17 @@ const TemplatesManager = () => {
             <div key={folder._id} className="group relative">
               <Card className="h-full hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigateToFolder(folder._id)}>
                 <CardContent className="p-4 flex flex-col items-center justify-center h-full">
-                  <FolderIcon className="h-12 w-12 text-yellow-400 mb-2" />
+                  {folder.coverPhotoUrl ? (
+                    <div className="relative w-full h-20 mb-2 rounded-lg overflow-hidden">
+                      <img 
+                        src={folder.coverPhotoUrl} 
+                        alt={folder.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <FolderIcon className="h-12 w-12 text-yellow-400 mb-2" />
+                  )}
                   <p className="text-sm font-medium text-center">{folder.name}</p>
                 </CardContent>
               </Card>
@@ -991,24 +1018,69 @@ const TemplatesManager = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="thumbnailUrl">Thumbnail URL</Label>
-                    <Input
-                      id="thumbnailUrl"
-                      placeholder="https://example.com/thumbnail.jpg"
-                      value={folderPricingData.thumbnailUrl}
-                      onChange={(e) => setFolderPricingData(prev => ({ ...prev, thumbnailUrl: e.target.value }))}
-                    />
+                    <Label htmlFor="coverPhoto">Cover Photo</Label>
+                    <div className="flex items-center justify-center w-full">
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <ImageIcon className="w-8 h-8 mb-2 text-gray-500" />
+                          <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">Click to upload cover photo</span>
+                          </p>
+                          <p className="text-xs text-gray-500">PNG, JPG, JPEG, GIF, or WebP</p>
+                        </div>
+                        <input 
+                          type="file" 
+                          className="hidden" 
+                          accept="image/*"
+                          onChange={(e) => setCoverPhotoFile(e.target.files?.[0] || null)}
+                        />
+                      </label>
+                    </div>
+                    {coverPhotoFile && (
+                      <div className="flex items-center justify-between p-2 text-sm bg-gray-50 rounded">
+                        <span className="truncate">{coverPhotoFile.name}</span>
+                        <button 
+                          type="button" 
+                          className="text-red-500 hover:text-red-700"
+                          onClick={() => setCoverPhotoFile(null)}
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+                    {folderPricingData.coverPhotoUrl && !coverPhotoFile && (
+                      <div className="mt-2">
+                        <p className="text-sm text-gray-600 mb-2">Current cover photo:</p>
+                        <img 
+                          src={folderPricingData.coverPhotoUrl} 
+                          alt="Current cover photo"
+                          className="w-20 h-20 object-cover rounded border"
+                        />
+                      </div>
+                    )}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="previewVideoUrl">Preview Video URL</Label>
-                    <Input
-                      id="previewVideoUrl"
-                      placeholder="https://example.com/preview.mp4"
-                      value={folderPricingData.previewVideoUrl}
-                      onChange={(e) => setFolderPricingData(prev => ({ ...prev, previewVideoUrl: e.target.value }))}
-                    />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="thumbnailUrl">Thumbnail URL</Label>
+                      <Input
+                        id="thumbnailUrl"
+                        placeholder="https://example.com/thumbnail.jpg"
+                        value={folderPricingData.thumbnailUrl}
+                        onChange={(e) => setFolderPricingData(prev => ({ ...prev, thumbnailUrl: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="previewVideoUrl">Preview Video URL</Label>
+                      <Input
+                        id="previewVideoUrl"
+                        placeholder="https://example.com/preview.mp4"
+                        value={folderPricingData.previewVideoUrl}
+                        onChange={(e) => setFolderPricingData(prev => ({ ...prev, previewVideoUrl: e.target.value }))}
+                      />
+                    </div>
                   </div>
                 </div>
               </>
@@ -1018,7 +1090,9 @@ const TemplatesManager = () => {
               <Button type="button" variant="outline" onClick={() => setFolderPricingOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit">Update Folder</Button>
+              <Button type="submit" disabled={isUploadingCoverPhoto}>
+                {isUploadingCoverPhoto ? 'Uploading...' : 'Update Folder'}
+              </Button>
             </div>
           </form>
         </DialogContent>

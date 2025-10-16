@@ -63,7 +63,18 @@ backend.interceptors.response.use(
 
 export { backend };
 
-export type Folder = { _id: string; name: string; parentId?: string | null }
+export type Folder = { 
+  _id: string; 
+  name: string; 
+  parentId?: string | null;
+  coverPhotoUrl?: string;
+  thumbnailUrl?: string;
+  previewVideoUrl?: string;
+  basePrice?: number;
+  discountPrice?: number;
+  isPurchasable?: boolean;
+  description?: string;
+}
 export type TemplateItem = {
   _id: string
   title: string
@@ -356,6 +367,33 @@ export async function deleteFolder(id: string) {
 export async function moveFolder(id: string, parentId: string | null) {
   const res = await backend.patch(`/content/folders/${id}/move`, { parentId }, {
     headers: {
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    }
+  })
+  return res.data
+}
+
+// Cover Photo Upload Functions
+export async function uploadFolderCoverPhoto(id: string, coverPhotoFile: File) {
+  const formData = new FormData()
+  formData.append('coverPhoto', coverPhotoFile)
+  
+  const res = await backend.post(`/content/folders/${id}/cover-photo`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    }
+  })
+  return res.data
+}
+
+export async function uploadPictureFolderCoverPhoto(id: string, coverPhotoFile: File) {
+  const formData = new FormData()
+  formData.append('coverPhoto', coverPhotoFile)
+  
+  const res = await backend.post(`/picture-content/picture-folders/${id}/cover-photo`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
       'Authorization': `Bearer ${localStorage.getItem('token')}`
     }
   })

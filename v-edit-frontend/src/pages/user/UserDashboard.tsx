@@ -317,97 +317,48 @@ export default function UserDashboard() {
   
   // Load ownership data on component mount
   useEffect(() => {
-    console.log('🏠 UserDashboard mounted, loading ownership data...');
-    console.log('🏠 Refresh flag status:', localStorage.getItem('refreshOrders'));
-    console.log('🏠 Search params:', params.toString());
-    
     const loadOwnershipData = async () => {
       try {
-        console.log('🔄 Fetching purchases for ownership data...');
-        console.log('🔄 Making API call to /api/purchases');
-        
         const response = await backend.get('/purchases');
-        
-        console.log('✅ Purchases API response status:', response.status);
-        console.log('✅ Purchases API response data:', response.data);
-        
         const purchases = response.data.purchases || [];
-        console.log('✅ Purchases array length:', purchases.length);
         
         // Get all unique template IDs from purchases
-        console.log('🔄 Processing purchases to extract template IDs...');
         const templateIds = Array.from(new Set(
           purchases.flatMap(purchase => {
-            console.log('🔄 Processing purchase:', purchase._id);
-            console.log('🔄 Purchase items:', purchase.items);
             return purchase.items
-              .filter((item: any) => {
-                console.log('🔄 Checking item:', item);
-                console.log('🔄 Item type:', item.type);
-                console.log('🔄 Item templateId:', item.templateId);
-                return item.type === 'template' && item.templateId;
-              })
-              .map((item: any) => {
-                console.log('✅ Adding template ID:', item.templateId);
-                return item.templateId;
-              });
+              .filter((item: any) => item.type === 'template' && item.templateId)
+              .map((item: any) => item.templateId);
           })
         ));
 
         // Get all unique picture template IDs from purchases
-        console.log('🔄 Processing purchases to extract picture template IDs...');
         const pictureTemplateIds = Array.from(new Set(
           purchases.flatMap(purchase => {
             return purchase.items
-              .filter((item: any) => {
-                return item.type === 'picture-template' && item.templateId;
-              })
-              .map((item: any) => {
-                console.log('✅ Adding picture template ID:', item.templateId);
-                return item.templateId;
-              });
+              .filter((item: any) => item.type === 'picture-template' && item.templateId)
+              .map((item: any) => item.templateId);
           })
         ));
         
-        console.log('✅ All purchases processed:', purchases);
-        console.log('✅ Extracted template IDs from purchases:', templateIds);
-        console.log('✅ Template IDs count:', templateIds.length);
-        console.log('✅ Extracted picture template IDs from purchases:', pictureTemplateIds);
-        console.log('✅ Picture template IDs count:', pictureTemplateIds.length);
-        
         setPurchasedTemplates(new Set(templateIds));
         setPurchasedPictureTemplates(new Set(pictureTemplateIds));
-        console.log('✅ Initial ownership data loaded:', templateIds);
-        console.log('✅ Initial picture ownership data loaded:', pictureTemplateIds);
         
         // Check if refresh flag is set and clear it
         if (localStorage.getItem('refreshOrders') === 'true') {
-          console.log('🔄 Refresh flag detected on mount, clearing it...');
           localStorage.removeItem('refreshOrders');
         }
-        
-        console.log('✅ Ownership data loading completed successfully');
       } catch (err) {
-        console.error('❌ Error loading ownership data:', err);
-        console.error('❌ Error details:', {
-          message: (err as Error).message,
-          stack: (err as Error).stack,
-          name: (err as Error).name
-        });
+        console.error('Error loading ownership data:', err);
       }
     };
 
-    console.log('🚀 Starting loadOwnershipData...');
     loadOwnershipData();
   }, []);
 
   // Listen for refresh flag from payment success
   useEffect(() => {
-    console.log('Setting up refresh listener...');
     const handleStorageChange = () => {
-      console.log('Storage change detected, checking refresh flag...');
       if (localStorage.getItem('refreshOrders') === 'true') {
-        console.log('Refreshing ownership data after payment...');
         const refreshOwnership = async () => {
           try {
             const response = await backend.get('/purchases');
@@ -433,8 +384,6 @@ export default function UserDashboard() {
             
             setPurchasedTemplates(new Set(templateIds));
             setPurchasedPictureTemplates(new Set(pictureTemplateIds));
-            console.log('Ownership data refreshed:', templateIds);
-            console.log('Picture ownership data refreshed:', pictureTemplateIds);
           } catch (err) {
             console.error('Error refreshing ownership data:', err);
           }
@@ -456,7 +405,6 @@ export default function UserDashboard() {
         setLoading(true);
         const folderId = params.get('folderId') || undefined;
         const data = await getHierarchy(folderId);
-        
         setFolders(data.folders as ExtendedFolder[]);
         setTemplates(data.templates as ExtendedTemplateItem[]);
         setPath(data.path || [{ _id: 'root', name: 'Home', parentId: null }]);
@@ -476,8 +424,6 @@ export default function UserDashboard() {
     const loadPictureData = async () => {
       try {
         const data = await getPictureHierarchy(undefined);
-        
-        
         setPictureFolders(data.folders as ExtendedPictureFolder[]);
         setPictureTemplates(data.templates as ExtendedPictureTemplate[]);
         setPicturePath(data.path || [{ _id: 'root', name: 'Home', parentId: null }]);
@@ -1178,12 +1124,42 @@ export default function UserDashboard() {
                   </div>
                 </div>
 
+                {/* Breadcrumb Navigation */}
+                {path.length > 1 && (
+                  <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg p-4 border border-slate-200 mb-4">
+                    <div className="flex items-center space-x-2 text-sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigateToFolder('')}
+                        className="text-blue-600 hover:text-blue-800 p-1"
+                      >
+                        <Home className="h-4 w-4 mr-1" />
+                        Home
+                      </Button>
+                      {path.slice(1).map((folder, index) => (
+                        <React.Fragment key={folder._id}>
+                          <ChevronRight className="h-4 w-4 text-slate-400" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigateToFolder(folder._id)}
+                            className="text-slate-600 hover:text-slate-800 p-1"
+                          >
+                            {folder.name}
+                          </Button>
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Sub-folders */}
                 {filteredFolders.length > 0 && (
                   <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg p-6 border border-slate-200">
                     <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center">
                       <FolderOpen className="h-6 w-6 mr-2 text-blue-600" />
-                      Sub-categories
+                      {path.length > 1 ? 'Sub-categories' : 'All Categories'}
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                       {filteredFolders.map((folder) => (
@@ -1197,8 +1173,24 @@ export default function UserDashboard() {
                               onClick={() => navigateToFolder(folder._id)}
                               className="cursor-pointer w-full"
                             >
-                              <div className="h-16 w-16 rounded-2xl bg-gradient-to-r from-blue-100 to-cyan-100 flex items-center justify-center text-blue-600 mb-4 group-hover:from-blue-200 group-hover:to-cyan-200 transition-all duration-300 group-hover:scale-110">
-                                <FolderOpen className="h-8 w-8" />
+                              <div className="h-16 w-16 rounded-2xl overflow-hidden mb-4 group-hover:scale-110 transition-all duration-300">
+                                {folder.coverPhotoUrl ? (
+                                  <img 
+                                    src={folder.coverPhotoUrl} 
+                                    alt={folder.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : folder.thumbnailUrl ? (
+                                  <img 
+                                    src={folder.thumbnailUrl} 
+                                    alt={folder.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="h-full w-full bg-gradient-to-r from-blue-100 to-cyan-100 flex items-center justify-center text-blue-600 group-hover:from-blue-200 group-hover:to-cyan-200 transition-all duration-300">
+                                    <FolderOpen className="h-8 w-8" />
+                                  </div>
+                                )}
                               </div>
                               <span className="font-semibold text-slate-900 group-hover:text-blue-700 transition-colors text-lg">
                                 {folder.name}
@@ -1209,6 +1201,23 @@ export default function UserDashboard() {
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {/* No sub-folders message */}
+                {filteredFolders.length === 0 && path.length > 1 && (
+                  <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg p-8 border border-slate-200 text-center">
+                    <FolderOpen className="h-16 w-16 text-slate-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-slate-700 mb-2">No sub-categories found</h3>
+                    <p className="text-slate-500 mb-4">This folder doesn't contain any sub-categories.</p>
+                    <Button
+                      onClick={() => navigateToFolder('')}
+                      variant="outline"
+                      className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                    >
+                      <Home className="h-4 w-4 mr-2" />
+                      Back to All Categories
+                    </Button>
                   </div>
                 )}
 

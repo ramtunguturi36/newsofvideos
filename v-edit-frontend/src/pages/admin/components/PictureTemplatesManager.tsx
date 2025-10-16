@@ -71,8 +71,11 @@ const PictureTemplatesManager = () => {
     isPurchasable: false,
     description: '',
     thumbnailUrl: '',
-    previewImageUrl: ''
+    previewImageUrl: '',
+    coverPhotoUrl: ''
   });
+  const [coverPhotoFile, setCoverPhotoFile] = useState<File | null>(null);
+  const [isUploadingCoverPhoto, setIsUploadingCoverPhoto] = useState(false);
 
   useEffect(() => {
     setParentId(currentFolderId);
@@ -345,7 +348,8 @@ const PictureTemplatesManager = () => {
       isPurchasable: folder.isPurchasable,
       description: folder.description || '',
       thumbnailUrl: folder.thumbnailUrl || '',
-      previewImageUrl: folder.previewImageUrl || ''
+      previewImageUrl: folder.previewImageUrl || '',
+      coverPhotoUrl: folder.coverPhotoUrl || ''
     });
     setFolderPricingOpen(true);
   }
@@ -355,6 +359,16 @@ const PictureTemplatesManager = () => {
     if (!selectedFolderForPricing) return;
 
     try {
+      // First upload cover photo if provided
+      let coverPhotoUrl = folderPricingData.coverPhotoUrl;
+      if (coverPhotoFile) {
+        setIsUploadingCoverPhoto(true);
+        const { uploadPictureFolderCoverPhoto } = await import('@/lib/backend');
+        const uploadResult = await uploadPictureFolderCoverPhoto(selectedFolderForPricing._id, coverPhotoFile);
+        coverPhotoUrl = uploadResult.folder.coverPhotoUrl;
+        setIsUploadingCoverPhoto(false);
+      }
+
       await updatePictureFolder(selectedFolderForPricing._id, {
         name: selectedFolderForPricing.name,
         parentId: selectedFolderForPricing.parentId,
@@ -363,11 +377,13 @@ const PictureTemplatesManager = () => {
         discountPrice: folderPricingData.discountPrice ? parseFloat(folderPricingData.discountPrice) : undefined,
         isPurchasable: folderPricingData.isPurchasable,
         thumbnailUrl: folderPricingData.thumbnailUrl,
-        previewImageUrl: folderPricingData.previewImageUrl
+        previewImageUrl: folderPricingData.previewImageUrl,
+        coverPhotoUrl: coverPhotoUrl
       });
       
       setFolderPricingOpen(false);
       setSelectedFolderForPricing(null);
+      setCoverPhotoFile(null);
       
       // Reset folder pricing data
       setFolderPricingData({
@@ -376,7 +392,8 @@ const PictureTemplatesManager = () => {
         isPurchasable: false,
         description: '',
         thumbnailUrl: '',
-        previewImageUrl: ''
+        previewImageUrl: '',
+        coverPhotoUrl: ''
       });
       
       // Refresh the list
@@ -384,6 +401,7 @@ const PictureTemplatesManager = () => {
       setFolders(data.folders || []);
     } catch (error) {
       alert('Failed to update folder pricing');
+      setIsUploadingCoverPhoto(false);
     }
   }
 
@@ -443,7 +461,17 @@ const PictureTemplatesManager = () => {
             <div key={folder._id} className="group relative">
               <Card className="h-full hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigateToFolder(folder._id)}>
                 <CardContent className="p-4 flex flex-col items-center justify-center h-full">
-                  <FolderIcon className="h-12 w-12 text-yellow-400 mb-2" />
+                  {folder.coverPhotoUrl ? (
+                    <div className="relative w-full h-20 mb-2 rounded-lg overflow-hidden">
+                      <img 
+                        src={folder.coverPhotoUrl} 
+                        alt={folder.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <FolderIcon className="h-12 w-12 text-yellow-400 mb-2" />
+                  )}
                   <p className="text-sm font-medium text-center">{folder.name}</p>
                 </CardContent>
               </Card>
@@ -948,6 +976,49 @@ const PictureTemplatesManager = () => {
                     rows={3}
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="coverPhoto">Cover Photo</Label>
+                  <div className="flex items-center justify-center w-full">
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <ImageIcon className="w-8 h-8 mb-2 text-gray-500" />
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Click to upload cover photo</span>
+                        </p>
+                        <p className="text-xs text-gray-500">PNG, JPG, JPEG, GIF, or WebP</p>
+                      </div>
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        accept="image/*"
+                        onChange={(e) => setCoverPhotoFile(e.target.files?.[0] || null)}
+                      />
+                    </label>
+                  </div>
+                  {coverPhotoFile && (
+                    <div className="flex items-center justify-between p-2 text-sm bg-gray-50 rounded">
+                      <span className="truncate">{coverPhotoFile.name}</span>
+                      <button 
+                        type="button" 
+                        className="text-red-500 hover:text-red-700"
+                        onClick={() => setCoverPhotoFile(null)}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                  {folderPricingData.coverPhotoUrl && !coverPhotoFile && (
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-600 mb-2">Current cover photo:</p>
+                      <img 
+                        src={folderPricingData.coverPhotoUrl} 
+                        alt="Current cover photo"
+                        className="w-20 h-20 object-cover rounded border"
+                      />
+                    </div>
+                  )}
+                </div>
               </>
             )}
 
@@ -955,7 +1026,9 @@ const PictureTemplatesManager = () => {
               <Button type="button" variant="outline" onClick={() => setFolderPricingOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit">Save</Button>
+              <Button type="submit" disabled={isUploadingCoverPhoto}>
+                {isUploadingCoverPhoto ? 'Uploading...' : 'Save'}
+              </Button>
             </div>
           </form>
         </DialogContent>

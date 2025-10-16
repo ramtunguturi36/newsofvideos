@@ -16,7 +16,25 @@ function FolderCard({ folder, onClick, hasAccess }: { folder: Folder; onClick: (
   return (
     <div onClick={onClick} className="cursor-pointer group">
       <Card className="p-4 hover:shadow-2xl transition-shadow relative">
-        <div className="aspect-video grid place-items-center text-yellow-400 text-5xl">📁</div>
+        <div className="aspect-video relative overflow-hidden rounded-lg">
+          {folder.coverPhotoUrl ? (
+            <img 
+              src={folder.coverPhotoUrl} 
+              alt={folder.name}
+              className="w-full h-full object-cover"
+            />
+          ) : folder.thumbnailUrl ? (
+            <img 
+              src={folder.thumbnailUrl} 
+              alt={folder.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full grid place-items-center text-yellow-400 text-5xl bg-gradient-to-br from-yellow-100 to-orange-100">
+              📁
+            </div>
+          )}
+        </div>
         <div className="mt-2 text-white/90 truncate">{folder.name}</div>
         {hasAccess && (
           <div className="absolute top-2 right-2">

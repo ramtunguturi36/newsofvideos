@@ -12,6 +12,7 @@ const pictureFolderSchema = new Schema(
     isPurchasable: { type: Boolean, default: false }, // Admin can enable folder purchase
     thumbnailUrl: { type: String }, // Folder preview image
     previewImageUrl: { type: String }, // Optional preview image for the folder
+    coverPhotoUrl: { type: String }, // Cover photo for the folder
     totalPictures: { type: Number, default: 0 }, // Auto-calculated
     createdBy: { type: Types.ObjectId, ref: 'User', required: true },
     category: { type: String, enum: ['photography', 'graphics', 'illustrations', 'templates', 'other'], default: 'other' },

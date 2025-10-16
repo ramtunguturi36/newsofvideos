@@ -133,7 +133,13 @@ const PictureFolderMarketplace = () => {
                 <Card className="group bg-white/80 backdrop-blur-lg border border-slate-200 hover:border-purple-300 hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-2 hover:bg-white/90">
                   <CardHeader className="p-0">
                     <div className="relative aspect-video bg-gradient-to-br from-purple-100 to-pink-100 overflow-hidden">
-                      {folder.thumbnailUrl ? (
+                      {folder.coverPhotoUrl ? (
+                        <img
+                          src={folder.coverPhotoUrl}
+                          alt={folder.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : folder.thumbnailUrl ? (
                         <img
                           src={folder.thumbnailUrl}
                           alt={folder.name}

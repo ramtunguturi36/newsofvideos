@@ -170,7 +170,13 @@ const FolderMarketplace = () => {
                   <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow duration-300">
                     {/* Folder Thumbnail */}
                     <div className="relative aspect-video bg-gradient-to-br from-indigo-500 to-purple-600">
-                      {folder.thumbnailUrl ? (
+                      {folder.coverPhotoUrl ? (
+                        <img 
+                          src={folder.coverPhotoUrl} 
+                          alt={folder.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : folder.thumbnailUrl ? (
                         <img 
                           src={folder.thumbnailUrl} 
                           alt={folder.name}

@@ -248,8 +248,22 @@ const PictureExplorer = () => {
                 <Card key={folder._id} className="group bg-white/90 backdrop-blur-lg border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300 overflow-hidden transform hover:-translate-y-1">
                   <CardHeader className="pb-3">
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 rounded-xl bg-gradient-to-r from-blue-500/20 to-teal-500/20">
-                        <FolderIcon className="h-6 w-6 text-blue-600" />
+                      <div className="h-12 w-12 rounded-xl overflow-hidden bg-gradient-to-r from-blue-500/20 to-teal-500/20 flex items-center justify-center">
+                        {folder.coverPhotoUrl ? (
+                          <img 
+                            src={folder.coverPhotoUrl} 
+                            alt={folder.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : folder.thumbnailUrl ? (
+                          <img 
+                            src={folder.thumbnailUrl} 
+                            alt={folder.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <FolderIcon className="h-6 w-6 text-blue-600" />
+                        )}
                       </div>
                       <div className="flex-1">
                         <CardTitle className="text-lg font-bold text-slate-900 line-clamp-1">

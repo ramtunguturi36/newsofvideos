@@ -8,6 +8,7 @@ export interface Folder {
   isPurchasable: boolean;
   thumbnailUrl?: string;
   previewVideoUrl?: string;
+  coverPhotoUrl?: string;
   totalTemplates: number;
   createdBy: string;
   createdAt: string;
@@ -121,6 +122,7 @@ export interface PictureFolder {
   isPurchasable: boolean;
   thumbnailUrl?: string;
   previewImageUrl?: string;
+  coverPhotoUrl?: string;
   totalPictures: number;
   createdBy: string;
   category: 'photography' | 'graphics' | 'illustrations' | 'templates' | 'other';

@@ -27,6 +27,8 @@ interface PurchasedFolder {
   description?: string;
   purchaseDate: string;
   templates: TemplateItem[];
+  coverPhotoUrl?: string;
+  thumbnailUrl?: string;
 }
 
 const PurchasedFolders = () => {
@@ -44,6 +46,7 @@ const PurchasedFolders = () => {
     try {
       setLoading(true);
       const foldersData = await getPurchasedFolders();
+      console.log('Received folder data:', foldersData);
       setFolders(foldersData);
     } catch (error) {
       console.error('Error loading purchased folders:', error);
@@ -126,8 +129,26 @@ const PurchasedFolders = () => {
                 <div className="bg-gradient-to-r from-blue-500/10 to-teal-500/10 p-4 md:p-6 border-b border-slate-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 rounded-xl bg-gradient-to-r from-blue-500/20 to-teal-500/20">
-                        <FolderIcon className="h-5 w-5 md:h-6 md:w-6 text-blue-600" />
+                      <div className="p-2 rounded-xl bg-gradient-to-r from-blue-500/20 to-teal-500/20 overflow-hidden">
+                        {folder.coverPhotoUrl ? (
+                          <div className="relative h-12 w-12">
+                            <img 
+                              src={folder.coverPhotoUrl} 
+                              alt={folder.name}
+                              className="absolute inset-0 h-full w-full object-cover rounded-lg"
+                              onError={(e) => {
+                                console.error('Error loading image:', folder.coverPhotoUrl);
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.style.display = 'none';
+                                const fallbackElement = document.createElement('div');
+                                fallbackElement.innerHTML = `<div class="h-full w-full flex items-center justify-center"><svg class="h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2z" /></svg></div>`;
+                                e.currentTarget.parentNode.appendChild(fallbackElement.firstChild);
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <FolderIcon className="h-5 w-5 md:h-6 md:w-6 text-blue-600" />
+                        )}
                       </div>
                       <div>
                         <h3 className="text-lg md:text-xl font-bold text-slate-900">{folder.name}</h3>
