@@ -934,14 +934,33 @@ export default function UserDashboard() {
                       {(showAllVideoFolders ? filteredFolders : filteredFolders.slice(0, 5)).map((folder) => (
                         <div
                           key={folder._id}
-                          className="group p-6 rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300 bg-white text-left cursor-pointer hover:-translate-y-1"
+                          className="group overflow-hidden rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300 bg-white text-left cursor-pointer hover:-translate-y-1 h-full flex flex-col"
                           onClick={() => navigateToFolder(folder._id)}
                         >
-                          <div className="h-16 w-16 rounded-xl bg-gradient-to-r from-blue-100 to-cyan-100 flex items-center justify-center text-blue-600 mb-4 group-hover:from-blue-200 group-hover:to-cyan-200 transition-all duration-300 shadow-sm">
-                            <FolderOpen className="h-8 w-8" />
+                          <div className="h-40 w-full overflow-hidden bg-slate-100">
+                            {folder.coverPhotoUrl ? (
+                              <img 
+                                src={folder.coverPhotoUrl} 
+                                alt={folder.name}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                onError={(e) => {
+                                  // Fallback to default background if image fails to load
+                                  const target = e.target as HTMLImageElement;
+                                  target.onerror = null;
+                                  target.style.display = 'none';
+                                  target.parentElement!.style.background = 'linear-gradient(to right, #e0f2fe, #bae6fd)';
+                                }}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-100 to-cyan-100 group-hover:from-blue-200 group-hover:to-cyan-200">
+                                <FolderOpen className="h-12 w-12 text-blue-600" />
+                              </div>
+                            )}
                           </div>
-                          <h3 className="font-bold text-slate-900 group-hover:text-blue-700 text-lg mb-1">{folder.name}</h3>
-                          <p className="text-slate-600 text-sm">View templates</p>
+                          <div className="p-4 flex-1 flex flex-col">
+                            <h3 className="font-bold text-slate-900 group-hover:text-blue-700 text-lg mb-1 line-clamp-1">{folder.name}</h3>
+                            <p className="text-slate-600 text-sm">View templates</p>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -977,14 +996,33 @@ export default function UserDashboard() {
                       {(showAllPictureFolders ? filteredPictureFolders : filteredPictureFolders.slice(0, 5)).map((folder) => (
                         <div
                           key={folder._id}
-                          className="group p-6 rounded-xl border border-slate-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300 bg-white text-left cursor-pointer hover:-translate-y-1"
+                          className="group overflow-hidden rounded-xl border border-slate-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300 bg-white text-left cursor-pointer hover:-translate-y-1 h-full flex flex-col"
                           onClick={() => navigate(`/picture-templates?folderId=${folder._id}`)}
                         >
-                          <div className="h-16 w-16 rounded-xl bg-gradient-to-r from-purple-100 to-pink-100 flex items-center justify-center text-purple-600 mb-4 group-hover:from-purple-200 group-hover:to-pink-200 transition-all duration-300 shadow-sm">
-                            <Image className="h-8 w-8" />
+                          <div className="h-40 w-full overflow-hidden bg-slate-100">
+                            {folder.coverPhotoUrl ? (
+                              <img 
+                                src={folder.coverPhotoUrl} 
+                                alt={folder.name}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                onError={(e) => {
+                                  // Fallback to default background if image fails to load
+                                  const target = e.target as HTMLImageElement;
+                                  target.onerror = null;
+                                  target.style.display = 'none';
+                                  target.parentElement!.style.background = 'linear-gradient(to right, #f3e8ff, #e9d5ff)';
+                                }}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-purple-100 to-pink-100 group-hover:from-purple-200 group-hover:to-pink-200">
+                                <Image className="h-12 w-12 text-purple-600" />
+                              </div>
+                            )}
                           </div>
-                          <h3 className="font-bold text-slate-900 group-hover:text-purple-700 text-lg mb-1">{folder.name}</h3>
-                          <p className="text-slate-600 text-sm">View Pictures</p>
+                          <div className="p-4 flex-1 flex flex-col">
+                            <h3 className="font-bold text-slate-900 group-hover:text-purple-700 text-lg mb-1 line-clamp-1">{folder.name}</h3>
+                            <p className="text-slate-600 text-sm">View Pictures</p>
+                          </div>
                         </div>
                       ))}
                     </div>
