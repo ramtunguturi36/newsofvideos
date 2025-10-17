@@ -1,30 +1,42 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { CartProvider } from './context/CartContext';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import Dashboard from './pages/admin/Dashboard';
-import DashboardHome from './pages/admin/components/DashboardHome';
-import TemplatesManager from './pages/admin/components/TemplatesManager';
-import PictureTemplatesManager from './pages/admin/components/PictureTemplatesManager';
-import CouponsManager from './pages/admin/components/CouponsManager';
-import UserLayout from './pages/user/UserLayout';
-import UserDashboard from './pages/user/UserDashboard';
-import Orders from './pages/user/Orders';
-import Settings from './pages/user/Settings';
-import PurchasedTemplates from './pages/user/PurchasedTemplates';
-import PurchasedFolders from './pages/user/PurchasedFolders';
-import MyPictureTemplates from './pages/user/MyPictureTemplates';
-import MyPictureFolders from './pages/user/MyPictureFolders';
-import FolderMarketplace from './pages/FolderMarketplace';
-import PictureFolderMarketplace from './pages/PictureFolderMarketplace';
-import PictureExplorer from './pages/PictureExplorer';
-import Landing from './pages/Landing';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import AdminLogin from './pages/AdminLogin';
-import PaymentSuccess from './pages/PaymentSuccess';
-import Contact from './pages/Contact';
-import { Toaster } from 'sonner';
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
+import { CartProvider } from "./context/CartContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Dashboard from "./pages/admin/Dashboard";
+import DashboardHome from "./pages/admin/components/DashboardHome";
+import TemplatesManager from "./pages/admin/components/TemplatesManager";
+import PictureTemplatesManager from "./pages/admin/components/PictureTemplatesManager";
+import VideoContentManager from "./pages/admin/components/VideoContentManager";
+import AudioContentManager from "./pages/admin/components/AudioContentManager";
+import CouponsManager from "./pages/admin/components/CouponsManager";
+import UserLayout from "./pages/user/UserLayout";
+import UserDashboard from "./pages/user/UserDashboard";
+import Orders from "./pages/user/Orders";
+import Settings from "./pages/user/Settings";
+import PurchasedTemplates from "./pages/user/PurchasedTemplates";
+import PurchasedFolders from "./pages/user/PurchasedFolders";
+import MyPictureTemplates from "./pages/user/MyPictureTemplates";
+import MyPictureFolders from "./pages/user/MyPictureFolders";
+import MyVideoContent from "./pages/user/MyVideoContent";
+import MyAudioContent from "./pages/user/MyAudioContent";
+import FolderMarketplace from "./pages/FolderMarketplace";
+import PictureFolderMarketplace from "./pages/PictureFolderMarketplace";
+import PictureExplorer from "./pages/PictureExplorer";
+import VideoExplorer from "./pages/VideoExplorer";
+import AudioExplorer from "./pages/AudioExplorer";
+import Landing from "./pages/Landing";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import AdminLogin from "./pages/AdminLogin";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import Contact from "./pages/Contact";
+import { Toaster } from "sonner";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -71,45 +83,66 @@ function App() {
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/folders" element={<FolderMarketplace />} />
-            <Route path="/picture-folders" element={<PictureFolderMarketplace />} />
+            <Route
+              path="/picture-folders"
+              element={<PictureFolderMarketplace />}
+            />
             <Route path="/picture-templates" element={<PictureExplorer />} />
+            <Route path="/video-content" element={<VideoExplorer />} />
+            <Route path="/audio-content" element={<AudioExplorer />} />
             <Route path="/login" element={<Login />} />
             <Route path="/login/admin" element={<AdminLogin />} />
             <Route path="/register" element={<Register />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/contact" element={<Contact />} />
-            
+
             {/* User routes */}
-            <Route path="/user" element={
-              <ProtectedRoute>
-                <UserLayout />
-              </ProtectedRoute>
-            }>
+            <Route
+              path="/user"
+              element={
+                <ProtectedRoute>
+                  <UserLayout />
+                </ProtectedRoute>
+              }
+            >
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<UserDashboard />} />
               <Route path="explorer" element={<div>Template Explorer</div>} />
               <Route path="orders" element={<Orders />} />
               <Route path="purchased" element={<PurchasedTemplates />} />
               <Route path="folders" element={<PurchasedFolders />} />
-              <Route path="picture-templates" element={<MyPictureTemplates />} />
+              <Route
+                path="picture-templates"
+                element={<MyPictureTemplates />}
+              />
               <Route path="picture-folders" element={<MyPictureFolders />} />
+              <Route path="video-content" element={<MyVideoContent />} />
+              <Route path="audio-content" element={<MyAudioContent />} />
               <Route path="settings/*" element={<Settings />} />
             </Route>
-            
+
             {/* Admin routes */}
-            <Route path="/admin" element={
-              <ProtectedRoute>
-                <AdminRoute>
-                  <Dashboard />
-                </AdminRoute>
-              </ProtectedRoute>
-            }>
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminRoute>
+                    <Dashboard />
+                  </AdminRoute>
+                </ProtectedRoute>
+              }
+            >
               <Route index element={<DashboardHome />} />
               <Route path="templates" element={<TemplatesManager />} />
-              <Route path="picture-templates" element={<PictureTemplatesManager />} />
+              <Route
+                path="picture-templates"
+                element={<PictureTemplatesManager />}
+              />
+              <Route path="video-content" element={<VideoContentManager />} />
+              <Route path="audio-content" element={<AudioContentManager />} />
               <Route path="coupons" element={<CouponsManager />} />
             </Route>
-            
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </CartProvider>
