@@ -84,6 +84,16 @@ const PictureTemplatesManager = () => {
   const [downloadImageFile, setDownloadImageFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Bulk upload state
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
+  const [bulkTitle, setBulkTitle] = useState("");
+  const [bulkBasePrice, setBulkBasePrice] = useState("");
+  const [bulkDiscountPrice, setBulkDiscountPrice] = useState("");
+  const [bulkHasDiscount, setBulkHasDiscount] = useState(false);
+  const [bulkImageFiles, setBulkImageFiles] = useState<FileList | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState("");
+
   // Edit states
   const [selectedFolder, setSelectedFolder] = useState<PictureFolder | null>(
     null,
@@ -276,6 +286,80 @@ const PictureTemplatesManager = () => {
     } finally {
       setIsUploading(false);
     }
+  }
+
+  async function handleBulkUpload(e: React.FormEvent) {
+    e.preventDefault();
+    if (!bulkImageFiles || bulkImageFiles.length === 0) {
+      alert("Please select at least one image file");
+      return;
+    }
+
+    if (!bulkBasePrice) {
+      alert("Please enter a base price");
+      return;
+    }
+
+    // Validate discount price if enabled
+    if (bulkHasDiscount && !bulkDiscountPrice) {
+      alert("Please enter a discount price or disable the discount option");
+      return;
+    }
+
+    setUploadProgress(0);
+    setUploadStatus("Starting bulk upload...");
+
+    const totalFiles = bulkImageFiles.length;
+    let successCount = 0;
+    let failedCount = 0;
+
+    for (let i = 0; i < totalFiles; i++) {
+      const file = bulkImageFiles[i];
+      const fileName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
+
+      try {
+        setUploadStatus(`Uploading ${i + 1}/${totalFiles}: ${fileName}...`);
+
+        // For bulk upload, use the same file for both preview and download
+        // In a production scenario, you'd want watermarking on the backend
+        await uploadPictureTemplate({
+          title: bulkTitle || fileName,
+          basePrice: parseFloat(bulkBasePrice),
+          discountPrice: bulkHasDiscount
+            ? parseFloat(bulkDiscountPrice)
+            : undefined,
+          previewImageFile: file,
+          downloadImageFile: file, // Same file for now
+          parentId: currentFolderId,
+        });
+
+        successCount++;
+        setUploadProgress(Math.round(((i + 1) / totalFiles) * 100));
+      } catch (error) {
+        failedCount++;
+        console.error(`Failed to upload ${fileName}:`, error);
+      }
+    }
+
+    setUploadStatus(
+      `Completed: ${successCount} succeeded, ${failedCount} failed`,
+    );
+
+    // Refresh the list
+    const data = await getPictureHierarchy(currentFolderId);
+    setTemplates(data.templates || []);
+
+    // Reset form after a delay
+    setTimeout(() => {
+      setBulkUploadOpen(false);
+      setBulkTitle("");
+      setBulkBasePrice("");
+      setBulkDiscountPrice("");
+      setBulkHasDiscount(false);
+      setBulkImageFiles(null);
+      setUploadProgress(0);
+      setUploadStatus("");
+    }, 2000);
   }
 
   function navigateToFolder(folderId: string) {
@@ -657,6 +741,10 @@ const PictureTemplatesManager = () => {
             <Upload className="h-4 w-4 mr-2" />
             Upload Template
           </Button>
+          <Button onClick={() => setBulkUploadOpen(true)} variant="outline">
+            <Upload className="h-4 w-4 mr-2" />
+            Bulk Upload
+          </Button>
         </div>
       </div>
 
@@ -704,13 +792,35 @@ const PictureTemplatesManager = () => {
                           alt={folder.name}
                           className="w-full h-full object-cover"
                         />
+                        <div className="absolute top-1 right-1 bg-green-500 text-white text-xs px-1.5 py-0.5 rounded flex items-center">
+                          <ImageIcon className="h-2.5 w-2.5 mr-0.5" />
+                          Cover
+                        </div>
                       </div>
                     ) : (
                       <FolderIcon className="h-12 w-12 text-yellow-400 mb-2" />
                     )}
-                    <p className="text-sm font-medium text-center">
+                    <p className="text-sm font-medium text-center mb-1">
                       {folder.name}
                     </p>
+                    {/* Pricing Badge */}
+                    {folder.isPurchasable && (
+                      <div className="mt-1">
+                        <span className="inline-flex items-center bg-green-100 text-green-800 text-xs font-semibold px-1.5 py-0.5 rounded">
+                          <DollarSign className="h-2.5 w-2.5 mr-0.5" />
+                          {folder.discountPrice
+                            ? `₹${folder.discountPrice}`
+                            : `₹${folder.basePrice}`}
+                        </span>
+                      </div>
+                    )}
+                    {!folder.isPurchasable && (
+                      <div className="mt-1">
+                        <span className="inline-flex items-center bg-gray-100 text-gray-600 text-xs font-semibold px-1.5 py-0.5 rounded">
+                          No Pricing
+                        </span>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -1468,6 +1578,115 @@ const PictureTemplatesManager = () => {
               )}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Upload Dialog */}
+      <Dialog open={bulkUploadOpen} onOpenChange={setBulkUploadOpen}>
+        <DialogContent className="max-w-2xl bg-white">
+          <DialogHeader>
+            <DialogTitle>Bulk Upload Templates</DialogTitle>
+            <DialogDescription>
+              Upload multiple picture templates at once with the same pricing.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleBulkUpload} className="space-y-4">
+            <div>
+              <Label htmlFor="bulkTitle">
+                Title Prefix (optional - uses filename if empty)
+              </Label>
+              <Input
+                id="bulkTitle"
+                value={bulkTitle}
+                onChange={(e) => setBulkTitle(e.target.value)}
+                placeholder="Enter title prefix"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="bulkBasePrice">Base Price (₹) *</Label>
+              <Input
+                id="bulkBasePrice"
+                type="number"
+                step="0.01"
+                value={bulkBasePrice}
+                onChange={(e) => setBulkBasePrice(e.target.value)}
+                placeholder="0.00"
+                required
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="bulkHasDiscount"
+                checked={bulkHasDiscount}
+                onCheckedChange={setBulkHasDiscount}
+              />
+              <Label htmlFor="bulkHasDiscount">Enable Discount</Label>
+            </div>
+
+            {bulkHasDiscount && (
+              <div>
+                <Label htmlFor="bulkDiscountPrice">Discount Price (₹)</Label>
+                <Input
+                  id="bulkDiscountPrice"
+                  type="number"
+                  step="0.01"
+                  value={bulkDiscountPrice}
+                  onChange={(e) => setBulkDiscountPrice(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+            )}
+
+            <div>
+              <Label htmlFor="bulkImageFiles">
+                Image Files * (JPEG, PNG, JPG, GIF, WebP)
+              </Label>
+              <Input
+                id="bulkImageFiles"
+                type="file"
+                multiple
+                accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
+                onChange={(e) => setBulkImageFiles(e.target.files)}
+                required
+              />
+              {bulkImageFiles && (
+                <p className="text-sm text-gray-600 mt-1">
+                  Selected: {bulkImageFiles.length} file(s)
+                </p>
+              )}
+            </div>
+
+            {uploadProgress > 0 && (
+              <div className="space-y-2">
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+                <p className="text-sm text-gray-600">{uploadStatus}</p>
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setBulkUploadOpen(false)}
+                disabled={uploadProgress > 0 && uploadProgress < 100}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={uploadProgress > 0 && uploadProgress < 100}
+              >
+                Upload All
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

@@ -117,6 +117,11 @@ const VideoContentManager = () => {
   const [coverPhotoFile, setCoverPhotoFile] = useState<File | null>(null);
   const [isUploadingCoverPhoto, setIsUploadingCoverPhoto] = useState(false);
 
+  // Preview player states
+  const [previewVideoOpen, setPreviewVideoOpen] = useState(false);
+  const [previewVideoUrl, setPreviewVideoUrl] = useState<string>("");
+  const [previewVideoTitle, setPreviewVideoTitle] = useState<string>("");
+
   useEffect(() => {
     setParentId(currentFolderId);
     // Clear selections when navigating to a different folder
@@ -566,6 +571,13 @@ const VideoContentManager = () => {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }
 
+  function openVideoPreview(video: VideoContent) {
+    // Admin sees the original unwatermarked video
+    setPreviewVideoUrl(video.downloadVideoUrl);
+    setPreviewVideoTitle(video.title);
+    setPreviewVideoOpen(true);
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -665,7 +677,7 @@ const VideoContentManager = () => {
             {folders.map((folder) => (
               <Card
                 key={folder._id}
-                className="hover:shadow-lg transition-shadow relative"
+                className="hover:shadow-lg transition-shadow relative overflow-hidden"
               >
                 {/* Selection checkbox */}
                 <div
@@ -679,6 +691,22 @@ const VideoContentManager = () => {
                     className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
                 </div>
+
+                {/* Cover Photo Section */}
+                {folder.coverPhotoUrl && (
+                  <div className="relative h-32 bg-gradient-to-br from-purple-100 to-blue-100">
+                    <img
+                      src={folder.coverPhotoUrl}
+                      alt={folder.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded flex items-center">
+                      <ImageIcon className="h-3 w-3 mr-1" />
+                      Cover
+                    </div>
+                  </div>
+                )}
+
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div
@@ -689,10 +717,33 @@ const VideoContentManager = () => {
                         <div className="p-2 bg-purple-100 rounded-lg mr-3">
                           <FolderIcon className="h-6 w-6 text-purple-600" />
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <h3 className="font-bold text-slate-800">
                             {folder.name}
                           </h3>
+                          {/* Pricing Badge */}
+                          {folder.isPurchasable && (
+                            <div className="mt-1">
+                              <span className="inline-flex items-center bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded">
+                                <DollarSign className="h-3 w-3 mr-0.5" />
+                                {folder.discountPrice
+                                  ? `₹${folder.discountPrice}`
+                                  : `₹${folder.basePrice}`}
+                                {folder.discountPrice && (
+                                  <span className="ml-1 line-through text-gray-500">
+                                    ₹{folder.basePrice}
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                          )}
+                          {!folder.isPurchasable && (
+                            <div className="mt-1">
+                              <span className="inline-flex items-center bg-gray-100 text-gray-600 text-xs font-semibold px-2 py-0.5 rounded">
+                                No Pricing
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -807,6 +858,14 @@ const VideoContentManager = () => {
                       )}
                     </div>
                     <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => openVideoPreview(video)}
+                        title="Preview Video"
+                      >
+                        <Play className="h-4 w-4 text-green-600" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="ghost"
@@ -1593,6 +1652,40 @@ const VideoContentManager = () => {
                   Delete {totalSelected} Item(s)
                 </>
               )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Video Preview Player Dialog */}
+      <Dialog open={previewVideoOpen} onOpenChange={setPreviewVideoOpen}>
+        <DialogContent className="bg-white max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Preview: {previewVideoTitle}</DialogTitle>
+            <DialogDescription>
+              Admin preview - Original unwatermarked video
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {previewVideoUrl && (
+              <div className="w-full aspect-video bg-black rounded-lg overflow-hidden">
+                <video
+                  src={previewVideoUrl}
+                  controls
+                  autoPlay
+                  className="w-full h-full"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setPreviewVideoOpen(false)}
+            >
+              Close
             </Button>
           </div>
         </DialogContent>

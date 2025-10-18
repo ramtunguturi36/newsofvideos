@@ -40,6 +40,7 @@ import {
   ShoppingCart,
   Settings,
   Image as ImageIcon,
+  Play,
 } from "lucide-react";
 
 // ... (FolderCard and TemplateCard components remain the same as in AdminExplorer.tsx)
@@ -116,6 +117,11 @@ const TemplatesManager = () => {
   });
   const [coverPhotoFile, setCoverPhotoFile] = useState<File | null>(null);
   const [isUploadingCoverPhoto, setIsUploadingCoverPhoto] = useState(false);
+
+  // Preview player states
+  const [previewVideoOpen, setPreviewVideoOpen] = useState(false);
+  const [previewVideoUrl, setPreviewVideoUrl] = useState<string>("");
+  const [previewVideoTitle, setPreviewVideoTitle] = useState<string>("");
 
   useEffect(() => {
     setParentId(currentFolderId);
@@ -440,6 +446,13 @@ const TemplatesManager = () => {
     }
   }
 
+  function openVideoPreview(template: TemplateItem) {
+    // Admin sees the original unwatermarked video
+    setPreviewVideoUrl(template.videoUrl);
+    setPreviewVideoTitle(template.title);
+    setPreviewVideoOpen(true);
+  }
+
   // Multi-select handlers
   const toggleFolderSelection = (folderId: string) => {
     setSelectedFolderIds((prev) => {
@@ -636,13 +649,35 @@ const TemplatesManager = () => {
                           alt={folder.name}
                           className="w-full h-full object-cover"
                         />
+                        <div className="absolute top-1 right-1 bg-green-500 text-white text-xs px-1.5 py-0.5 rounded flex items-center">
+                          <ImageIcon className="h-2.5 w-2.5 mr-0.5" />
+                          Cover
+                        </div>
                       </div>
                     ) : (
                       <FolderIcon className="h-12 w-12 text-yellow-400 mb-2" />
                     )}
-                    <p className="text-sm font-medium text-center">
+                    <p className="text-sm font-medium text-center mb-1">
                       {folder.name}
                     </p>
+                    {/* Pricing Badge */}
+                    {folder.isPurchasable && (
+                      <div className="mt-1">
+                        <span className="inline-flex items-center bg-green-100 text-green-800 text-xs font-semibold px-1.5 py-0.5 rounded">
+                          <DollarSign className="h-2.5 w-2.5 mr-0.5" />
+                          {folder.discountPrice
+                            ? `₹${folder.discountPrice}`
+                            : `₹${folder.basePrice}`}
+                        </span>
+                      </div>
+                    )}
+                    {!folder.isPurchasable && (
+                      <div className="mt-1">
+                        <span className="inline-flex items-center bg-gray-100 text-gray-600 text-xs font-semibold px-1.5 py-0.5 rounded">
+                          No Pricing
+                        </span>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -745,6 +780,18 @@ const TemplatesManager = () => {
 
                     {/* Management buttons overlay */}
                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-1 z-10">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="h-7 w-7 p-0 bg-white shadow-md hover:bg-gray-100 border"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openVideoPreview(template);
+                        }}
+                        title="Preview Video"
+                      >
+                        <Play className="h-3 w-3 text-green-600" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="secondary"
@@ -1576,6 +1623,40 @@ const TemplatesManager = () => {
                   Delete {totalSelected} Item(s)
                 </>
               )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Video Preview Player Dialog */}
+      <Dialog open={previewVideoOpen} onOpenChange={setPreviewVideoOpen}>
+        <DialogContent className="bg-white max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Preview: {previewVideoTitle}</DialogTitle>
+            <DialogDescription>
+              Admin preview - Original unwatermarked video
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {previewVideoUrl && (
+              <div className="w-full aspect-video bg-black rounded-lg overflow-hidden">
+                <video
+                  src={previewVideoUrl}
+                  controls
+                  autoPlay
+                  className="w-full h-full"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setPreviewVideoOpen(false)}
+            >
+              Close
             </Button>
           </div>
         </DialogContent>

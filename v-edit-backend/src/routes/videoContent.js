@@ -77,12 +77,12 @@ router.post(
       const metadata = await getVideoMetadata(videoFile.buffer);
       console.log("📊 Video metadata:", metadata);
 
-      // Create watermarked preview video
-      console.log("💧 Adding watermark to preview video...");
-      const watermarkedVideo = await addVideoWatermark(
-        videoFile.buffer,
-        "PREVIEW ONLY - DO NOT COPY",
+      // TEMPORARY FIX: Watermarking disabled to prevent Render crashes
+      // Using original video as preview until Cloudflare Workers implementation
+      console.log(
+        "⚠️  WATERMARKING DISABLED - Using original video as preview",
       );
+      const watermarkedVideo = videoFile.buffer; // No processing, no crash
 
       const videoKey = `video-downloads/${ts}-${videoFile.originalname}`;
       const previewKey = `video-previews/${ts}-preview-${videoFile.originalname}`;
@@ -284,11 +284,9 @@ router.post(
         "image/webp",
       ];
       if (!validImageTypes.includes(coverPhotoFile.mimetype)) {
-        return res
-          .status(400)
-          .json({
-            message: "Invalid file type. Please upload a valid image file.",
-          });
+        return res.status(400).json({
+          message: "Invalid file type. Please upload a valid image file.",
+        });
       }
 
       const folder = await VideoFolder.findById(id);
@@ -420,10 +418,11 @@ router.put(
           console.log("🎬 Processing video update...");
 
           const metadata = await getVideoMetadata(videoFile.buffer);
-          const watermarkedVideo = await addVideoWatermark(
-            videoFile.buffer,
-            "PREVIEW ONLY - DO NOT COPY",
+          // TEMPORARY FIX: Watermarking disabled to prevent Render crashes
+          console.log(
+            "⚠️  WATERMARKING DISABLED - Using original video as preview",
           );
+          const watermarkedVideo = videoFile.buffer; // No processing, no crash
 
           const videoKey = `video-downloads/${ts}-${videoFile.originalname}`;
           const previewKey = `video-previews/${ts}-preview-${videoFile.originalname}`;
@@ -539,11 +538,9 @@ router.patch(
       if (parentId) {
         const isDescendant = await checkIfDescendant(parentId, id);
         if (isDescendant || parentId === id) {
-          return res
-            .status(400)
-            .json({
-              message: "Cannot move folder into itself or its descendants",
-            });
+          return res.status(400).json({
+            message: "Cannot move folder into itself or its descendants",
+          });
         }
       }
 

@@ -118,6 +118,11 @@ const AudioContentManager = () => {
   const [coverPhotoFile, setCoverPhotoFile] = useState<File | null>(null);
   const [isUploadingCoverPhoto, setIsUploadingCoverPhoto] = useState(false);
 
+  // Preview player states
+  const [previewAudioOpen, setPreviewAudioOpen] = useState(false);
+  const [previewAudioUrl, setPreviewAudioUrl] = useState<string>("");
+  const [previewAudioTitle, setPreviewAudioTitle] = useState<string>("");
+
   useEffect(() => {
     setParentId(currentFolderId);
     // Clear selections when navigating to a different folder
@@ -567,6 +572,13 @@ const AudioContentManager = () => {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }
 
+  function openAudioPreview(audio: AudioContent) {
+    // Admin sees the original unwatermarked audio
+    setPreviewAudioUrl(audio.downloadAudioUrl);
+    setPreviewAudioTitle(audio.title);
+    setPreviewAudioOpen(true);
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -666,7 +678,7 @@ const AudioContentManager = () => {
             {folders.map((folder) => (
               <Card
                 key={folder._id}
-                className="hover:shadow-lg transition-shadow relative"
+                className="hover:shadow-lg transition-shadow relative overflow-hidden"
               >
                 {/* Selection checkbox */}
                 <div
@@ -680,6 +692,22 @@ const AudioContentManager = () => {
                     className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
                 </div>
+
+                {/* Cover Photo Section */}
+                {folder.coverPhotoUrl && (
+                  <div className="relative h-32 bg-gradient-to-br from-orange-100 to-pink-100">
+                    <img
+                      src={folder.coverPhotoUrl}
+                      alt={folder.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded flex items-center">
+                      <ImageIcon className="h-3 w-3 mr-1" />
+                      Cover
+                    </div>
+                  </div>
+                )}
+
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div
@@ -690,10 +718,33 @@ const AudioContentManager = () => {
                         <div className="p-2 bg-orange-100 rounded-lg mr-3">
                           <FolderIcon className="h-6 w-6 text-orange-600" />
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <h3 className="font-bold text-slate-800">
                             {folder.name}
                           </h3>
+                          {/* Pricing Badge */}
+                          {folder.isPurchasable && (
+                            <div className="mt-1">
+                              <span className="inline-flex items-center bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded">
+                                <DollarSign className="h-3 w-3 mr-0.5" />
+                                {folder.discountPrice
+                                  ? `₹${folder.discountPrice}`
+                                  : `₹${folder.basePrice}`}
+                                {folder.discountPrice && (
+                                  <span className="ml-1 line-through text-gray-500">
+                                    ₹{folder.basePrice}
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                          )}
+                          {!folder.isPurchasable && (
+                            <div className="mt-1">
+                              <span className="inline-flex items-center bg-gray-100 text-gray-600 text-xs font-semibold px-2 py-0.5 rounded">
+                                No Pricing
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -800,6 +851,14 @@ const AudioContentManager = () => {
                       )}
                     </div>
                     <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => openAudioPreview(audioItem)}
+                        title="Preview Audio"
+                      >
+                        <Play className="h-4 w-4 text-green-600" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="ghost"
@@ -1590,6 +1649,43 @@ const AudioContentManager = () => {
                   Delete {totalSelected} Item(s)
                 </>
               )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Audio Preview Player Dialog */}
+      <Dialog open={previewAudioOpen} onOpenChange={setPreviewAudioOpen}>
+        <DialogContent className="bg-white max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Preview: {previewAudioTitle}</DialogTitle>
+            <DialogDescription>
+              Admin preview - Original unwatermarked audio
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {previewAudioUrl && (
+              <div className="w-full bg-gradient-to-br from-orange-50 to-pink-50 rounded-lg p-8">
+                <div className="flex items-center justify-center mb-4">
+                  <Headphones className="h-16 w-16 text-orange-400" />
+                </div>
+                <audio
+                  src={previewAudioUrl}
+                  controls
+                  autoPlay
+                  className="w-full"
+                >
+                  Your browser does not support the audio tag.
+                </audio>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setPreviewAudioOpen(false)}
+            >
+              Close
             </Button>
           </div>
         </DialogContent>
