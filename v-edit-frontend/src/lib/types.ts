@@ -31,7 +31,15 @@ export interface TemplateItem {
 
 export interface CartItem {
   id: string;
-  type: "template" | "folder";
+  type:
+    | "template"
+    | "folder"
+    | "picture-template"
+    | "picture-folder"
+    | "video-content"
+    | "video-folder"
+    | "audio-content"
+    | "audio-folder";
   title: string;
   price: number;
   data: any;
