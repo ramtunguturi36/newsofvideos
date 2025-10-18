@@ -786,7 +786,7 @@ const VideoContentManager = () => {
       )}
 
       {/* Videos */}
-      {videos.length > 0 && (
+      {currentFolderId && videos.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-slate-800 flex items-center">

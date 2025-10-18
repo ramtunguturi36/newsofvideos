@@ -727,7 +727,7 @@ const TemplatesManager = () => {
       )}
 
       {/* Templates Grid */}
-      {templates.length > 0 && (
+      {currentFolderId && templates.length > 0 && (
         <div className="mt-6">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg font-medium">

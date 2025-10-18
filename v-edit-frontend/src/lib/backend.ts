@@ -151,7 +151,6 @@ export async function uploadTemplate(data: {
     const res = await backend.post("/content/templates", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${localStorage.getItem("token")}`, // Add auth token if needed
       },
     });
     return res.data as { template: TemplateItem };
@@ -257,7 +256,6 @@ export async function uploadPictureTemplate(data: {
       {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       },
     );
@@ -353,7 +351,6 @@ export async function updatePictureTemplate(
       {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       },
     );
@@ -442,11 +439,7 @@ export async function updateFolder(
     parentId?: string | null;
   },
 ) {
-  const res = await backend.put(`/content/folders/${id}`, data, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-  });
+  const res = await backend.put(`/content/folders/${id}`, data);
   return res.data;
 }
 
@@ -483,7 +476,6 @@ export async function uploadFolderCoverPhoto(id: string, coverPhotoFile: File) {
     {
       headers: {
         "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
     },
   );
@@ -503,7 +495,6 @@ export async function uploadPictureFolderCoverPhoto(
     {
       headers: {
         "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
     },
   );
@@ -569,7 +560,6 @@ export async function uploadVideoContent(data: {
     const res = await backend.post("/video-content/video-content", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
       timeout: 300000, // 5 minutes for video upload
     });
@@ -643,7 +633,6 @@ export async function updateVideoContent(
       {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         timeout: 300000,
       },
@@ -681,7 +670,6 @@ export async function uploadVideoFolderCoverPhoto(
     {
       headers: {
         "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
     },
   );
@@ -751,7 +739,6 @@ export async function uploadAudioContent(data: {
     const res = await backend.post("/audio-content/audio-content", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
       timeout: 120000, // 2 minutes for audio upload
     });
@@ -827,7 +814,6 @@ export async function updateAudioContent(
       {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         timeout: 120000,
       },
@@ -865,7 +851,6 @@ export async function uploadAudioFolderCoverPhoto(
     {
       headers: {
         "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
     },
   );

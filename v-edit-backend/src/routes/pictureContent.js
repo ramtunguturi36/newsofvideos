@@ -14,6 +14,43 @@ const upload = multer({
 
 const router = express.Router();
 
+// Upload cover photo for picture folder
+router.post(
+  "/picture-folders/:id/cover-photo",
+  authMiddleware,
+  roleMiddleware(["admin"]),
+  upload.single("coverPhoto"),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const file = req.file;
+      if (!file) return res.status(400).json({ message: "No file uploaded" });
+
+      const folder = await PictureFolder.findById(id);
+      if (!folder) return res.status(404).json({ message: "Folder not found" });
+
+      const bucket = process.env.R2_BUCKET;
+      const ts = Date.now();
+      const key = `picture-covers/${ts}-${file.originalname}`;
+
+      const coverPhotoUrl = await uploadToR2({
+        bucket,
+        key,
+        contentType: file.mimetype,
+        body: file.buffer,
+      });
+
+      folder.coverPhotoUrl = coverPhotoUrl;
+      await folder.save();
+
+      return res.json({ folder });
+    } catch (err) {
+      console.error("❌ Cover photo upload error:", err);
+      return res.status(500).json({ message: "Server error" });
+    }
+  }
+);
+
 // Create picture folder
 router.post(
   "/picture-folders",
