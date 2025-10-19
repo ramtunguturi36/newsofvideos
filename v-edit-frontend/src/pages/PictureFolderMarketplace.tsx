@@ -1,30 +1,38 @@
-import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { 
-  Folder as FolderIcon, 
-  Image, 
-  ShoppingCart, 
-  Eye, 
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Folder as FolderIcon,
+  Image,
+  ShoppingCart,
+  Eye,
   Download,
   CheckCircle,
   Lock,
   Users,
-  Calendar
-} from 'lucide-react';
-import { getPictureHierarchy } from '@/lib/backend';
-import { useCart } from '@/context/CartContext';
-import { toast } from 'sonner';
-import type { PictureFolder, PictureTemplate } from '@/lib/types';
+  Calendar,
+} from "lucide-react";
+import { getPictureHierarchy } from "@/lib/backend";
+import { useCart } from "@/context/CartContext";
+import { toast } from "sonner";
+import type { PictureFolder, PictureTemplate } from "@/lib/types";
 
 const PictureFolderMarketplace = () => {
   const [folders, setFolders] = useState<PictureFolder[]>([]);
   const [loading, setLoading] = useState(true);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [selectedFolder, setSelectedFolder] = useState<PictureFolder | null>(null);
+  const [selectedFolder, setSelectedFolder] = useState<PictureFolder | null>(
+    null,
+  );
   const [folderTemplates, setFolderTemplates] = useState<PictureTemplate[]>([]);
   const { addItem } = useCart();
 
@@ -36,13 +44,15 @@ const PictureFolderMarketplace = () => {
     try {
       setLoading(true);
       const data = await getPictureHierarchy(undefined);
-      
+
       // Filter only purchasable folders
-      const purchasableFolders = data.folders.filter(folder => folder.isPurchasable);
+      const purchasableFolders = data.folders.filter(
+        (folder) => folder.isPurchasable,
+      );
       setFolders(purchasableFolders);
     } catch (error) {
-      console.error('Error loading purchasable folders:', error);
-      toast.error('Failed to load folders');
+      console.error("Error loading purchasable folders:", error);
+      toast.error("Failed to load folders");
     } finally {
       setLoading(false);
     }
@@ -53,8 +63,8 @@ const PictureFolderMarketplace = () => {
       const data = await getPictureHierarchy(folderId);
       setFolderTemplates(data.templates);
     } catch (error) {
-      console.error('Error loading folder templates:', error);
-      toast.error('Failed to load folder contents');
+      console.error("Error loading folder templates:", error);
+      toast.error("Failed to load folder contents");
     }
   };
 
@@ -66,16 +76,15 @@ const PictureFolderMarketplace = () => {
 
   const handleAddToCart = (folder: PictureFolder) => {
     if (!addItem) return;
-    
+
     addItem({
       id: folder._id,
-      type: 'picture-folder',
+      type: "picture-folder",
       title: folder.name,
       price: folder.discountPrice || folder.basePrice,
-      data: folder
     });
-    
-    toast.success('Added to cart');
+
+    toast.success("Added to cart");
   };
 
   if (loading) {
@@ -107,7 +116,8 @@ const PictureFolderMarketplace = () => {
               Picture Folder Store
             </h1>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-              Browse and purchase complete picture collections at discounted prices
+              Browse and purchase complete picture collections at discounted
+              prices
             </p>
           </motion.div>
         </div>
@@ -117,8 +127,12 @@ const PictureFolderMarketplace = () => {
           <div className="text-center py-12">
             <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-8 border border-slate-200 shadow-lg max-w-md mx-auto">
               <FolderIcon className="h-16 w-16 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">No Picture Folders Available</h3>
-              <p className="text-slate-600">Check back later for new picture collections!</p>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">
+                No Picture Folders Available
+              </h3>
+              <p className="text-slate-600">
+                Check back later for new picture collections!
+              </p>
             </div>
           </div>
         ) : (
@@ -168,7 +182,7 @@ const PictureFolderMarketplace = () => {
                       </div>
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent className="p-6">
                     <div className="mb-4">
                       <h3 className="font-bold text-slate-900 text-lg mb-2 line-clamp-2">
@@ -193,7 +207,10 @@ const PictureFolderMarketplace = () => {
                         )}
                       </div>
                       {folder.discountPrice && (
-                        <Badge variant="secondary" className="bg-green-100 text-green-700">
+                        <Badge
+                          variant="secondary"
+                          className="bg-green-100 text-green-700"
+                        >
                           Save ₹{folder.basePrice - folder.discountPrice}
                         </Badge>
                       )}
@@ -235,7 +252,9 @@ const PictureFolderMarketplace = () => {
                         <Image className="h-6 w-6 text-purple-600" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-slate-900">{selectedFolder.name}</h3>
+                        <h3 className="font-semibold text-slate-900">
+                          {selectedFolder.name}
+                        </h3>
                         <p className="text-sm text-slate-600">
                           {folderTemplates.length} pictures available
                         </p>
@@ -243,7 +262,9 @@ const PictureFolderMarketplace = () => {
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold text-purple-600">
-                        ₹{selectedFolder.discountPrice || selectedFolder.basePrice}
+                        ₹
+                        {selectedFolder.discountPrice ||
+                          selectedFolder.basePrice}
                       </div>
                       {selectedFolder.discountPrice && (
                         <div className="text-sm text-slate-500 line-through">
@@ -252,15 +273,19 @@ const PictureFolderMarketplace = () => {
                       )}
                     </div>
                   </div>
-                  
+
                   {selectedFolder.description && (
-                    <p className="text-slate-600 text-sm">{selectedFolder.description}</p>
+                    <p className="text-slate-600 text-sm">
+                      {selectedFolder.description}
+                    </p>
                   )}
                 </div>
 
                 {/* Templates Preview */}
                 <div>
-                  <h4 className="font-semibold text-slate-900 mb-4">Collection Preview</h4>
+                  <h4 className="font-semibold text-slate-900 mb-4">
+                    Collection Preview
+                  </h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {folderTemplates.slice(0, 8).map((template) => (
                       <div
@@ -293,7 +318,8 @@ const PictureFolderMarketplace = () => {
                   </div>
                   {folderTemplates.length > 8 && (
                     <p className="text-sm text-slate-500 mt-4 text-center">
-                      +{folderTemplates.length - 8} more pictures in this collection
+                      +{folderTemplates.length - 8} more pictures in this
+                      collection
                     </p>
                   )}
                 </div>
@@ -305,7 +331,8 @@ const PictureFolderMarketplace = () => {
                     className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
                   >
                     <ShoppingCart className="h-4 w-4 mr-2" />
-                    Add to Cart - ₹{selectedFolder.discountPrice || selectedFolder.basePrice}
+                    Add to Cart - ₹
+                    {selectedFolder.discountPrice || selectedFolder.basePrice}
                   </Button>
                   <Button
                     variant="outline"

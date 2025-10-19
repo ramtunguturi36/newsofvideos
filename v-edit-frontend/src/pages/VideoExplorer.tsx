@@ -1,10 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import React, { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Video,
   Folder as FolderIcon,
@@ -24,12 +29,12 @@ import {
   Film,
   Sparkles,
   Heart,
-  CheckCircle
-} from 'lucide-react';
-import { getVideoHierarchy } from '@/lib/backend';
-import { useCart } from '@/context/CartContext';
-import { toast } from 'sonner';
-import type { VideoFolder, VideoContent } from '@/lib/types';
+  CheckCircle,
+} from "lucide-react";
+import { getVideoHierarchy } from "@/lib/backend";
+import { useCart } from "@/context/CartContext";
+import { toast } from "sonner";
+import type { VideoFolder, VideoContent } from "@/lib/types";
 
 const VideoExplorer = () => {
   const navigate = useNavigate();
@@ -38,14 +43,14 @@ const VideoExplorer = () => {
   const [videos, setVideos] = useState<VideoContent[]>([]);
   const [path, setPath] = useState<VideoFolder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
   const [selectedVideo, setSelectedVideo] = useState<VideoContent | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const { addItem } = useCart();
 
-  const currentFolderId = params.get('folderId');
+  const currentFolderId = params.get("folderId");
 
   useEffect(() => {
     loadHierarchy();
@@ -59,8 +64,8 @@ const VideoExplorer = () => {
       setVideos(data.videos || []);
       setPath(data.path || []);
     } catch (error) {
-      console.error('Error loading video hierarchy:', error);
-      toast.error('Failed to load video content');
+      console.error("Error loading video hierarchy:", error);
+      toast.error("Failed to load video content");
     } finally {
       setLoading(false);
     }
@@ -87,9 +92,9 @@ const VideoExplorer = () => {
     const price = video.discountPrice || video.basePrice;
     addItem({
       id: video._id,
-      type: 'video-content',
+      type: "video-content",
       title: video.title,
-      price
+      price,
     });
     toast.success(`${video.title} added to cart!`);
   };
@@ -100,29 +105,36 @@ const VideoExplorer = () => {
   };
 
   const formatDuration = (seconds?: number) => {
-    if (!seconds) return 'N/A';
+    if (!seconds) return "N/A";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   const formatFileSize = (bytes?: number) => {
-    if (!bytes) return 'N/A';
+    if (!bytes) return "N/A";
     const mb = bytes / (1024 * 1024);
     return `${mb.toFixed(2)} MB`;
   };
 
-  const filteredVideos = videos.filter(video => {
-    const matchesSearch = video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        video.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        video.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = filterCategory === 'all' || video.category === filterCategory;
+  const filteredVideos = videos.filter((video) => {
+    const matchesSearch =
+      video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      video.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      video.tags?.some((tag) =>
+        tag.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
+    const matchesCategory =
+      filterCategory === "all" || video.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const filteredFolders = folders.filter(folder => {
-    const matchesSearch = folder.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || folder.category === filterCategory;
+  const filteredFolders = folders.filter((folder) => {
+    const matchesSearch = folder.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      filterCategory === "all" || folder.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -155,7 +167,7 @@ const VideoExplorer = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <Button
-                  onClick={() => navigate('/user/dashboard')}
+                  onClick={() => navigate("/user/dashboard")}
                   className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl px-6 py-3 font-semibold"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
@@ -223,18 +235,18 @@ const VideoExplorer = () => {
               </div>
               <div className="flex bg-slate-100 rounded-xl p-1">
                 <Button
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  variant={viewMode === "grid" ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className={`rounded-lg ${viewMode === 'grid' ? 'bg-white shadow-md' : ''}`}
+                  onClick={() => setViewMode("grid")}
+                  className={`rounded-lg ${viewMode === "grid" ? "bg-white shadow-md" : ""}`}
                 >
                   <Grid className="h-4 w-4" />
                 </Button>
                 <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  variant={viewMode === "list" ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => setViewMode('list')}
-                  className={`rounded-lg ${viewMode === 'list' ? 'bg-white shadow-md' : ''}`}
+                  onClick={() => setViewMode("list")}
+                  className={`rounded-lg ${viewMode === "list" ? "bg-white shadow-md" : ""}`}
                 >
                   <List className="h-4 w-4" />
                 </Button>
@@ -262,7 +274,10 @@ const VideoExplorer = () => {
                       <div className="p-3 bg-gradient-to-br from-purple-100 to-blue-100 rounded-xl group-hover:from-purple-200 group-hover:to-blue-200 transition-colors">
                         <FolderIcon className="h-8 w-8 text-purple-600" />
                       </div>
-                      <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                      <Badge
+                        variant="secondary"
+                        className="bg-purple-100 text-purple-700"
+                      >
                         {folder.totalVideos || 0} videos
                       </Badge>
                     </div>
@@ -275,7 +290,10 @@ const VideoExplorer = () => {
                       </p>
                     )}
                     {folder.category && (
-                      <Badge variant="outline" className="mt-3 border-purple-300 text-purple-700">
+                      <Badge
+                        variant="outline"
+                        className="mt-3 border-purple-300 text-purple-700"
+                      >
                         {folder.category}
                       </Badge>
                     )}
@@ -293,7 +311,9 @@ const VideoExplorer = () => {
               <Video className="h-6 w-6 mr-2 text-purple-600" />
               Videos ({filteredVideos.length})
             </h2>
-            <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'} gap-6`}>
+            <div
+              className={`grid ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"} gap-6`}
+            >
               {filteredVideos.map((video) => (
                 <Card
                   key={video._id}
@@ -339,7 +359,11 @@ const VideoExplorer = () => {
                     {video.tags && video.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {video.tags.slice(0, 3).map((tag, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-xs bg-purple-50 text-purple-700">
+                          <Badge
+                            key={idx}
+                            variant="secondary"
+                            className="text-xs bg-purple-50 text-purple-700"
+                          >
                             <Tag className="h-3 w-3 mr-1" />
                             {tag}
                           </Badge>
@@ -351,11 +375,17 @@ const VideoExplorer = () => {
                       <div>
                         {video.discountPrice ? (
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm text-slate-500 line-through">₹{video.basePrice}</span>
-                            <span className="text-xl font-bold text-purple-600">₹{video.discountPrice}</span>
+                            <span className="text-sm text-slate-500 line-through">
+                              ₹{video.basePrice}
+                            </span>
+                            <span className="text-xl font-bold text-purple-600">
+                              ₹{video.discountPrice}
+                            </span>
                           </div>
                         ) : (
-                          <span className="text-xl font-bold text-purple-600">₹{video.basePrice}</span>
+                          <span className="text-xl font-bold text-purple-600">
+                            ₹{video.basePrice}
+                          </span>
                         )}
                       </div>
                       <div className="flex space-x-2">
@@ -379,7 +409,9 @@ const VideoExplorer = () => {
 
                     {video.resolution && (
                       <div className="text-xs text-slate-500 flex items-center justify-between">
-                        <span>{video.resolution.width}x{video.resolution.height}</span>
+                        <span>
+                          {video.resolution.width}x{video.resolution.height}
+                        </span>
                         <span>{formatFileSize(video.fileSize)}</span>
                       </div>
                     )}
@@ -394,11 +426,13 @@ const VideoExplorer = () => {
         {filteredFolders.length === 0 && filteredVideos.length === 0 && (
           <div className="text-center py-20 bg-white/90 backdrop-blur-lg rounded-2xl border border-slate-200/50">
             <Video className="h-20 w-20 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-2xl font-bold text-slate-700 mb-2">No videos found</h3>
+            <h3 className="text-2xl font-bold text-slate-700 mb-2">
+              No videos found
+            </h3>
             <p className="text-slate-500">
-              {searchTerm || filterCategory !== 'all'
-                ? 'Try adjusting your search or filters'
-                : 'This folder is empty'}
+              {searchTerm || filterCategory !== "all"
+                ? "Try adjusting your search or filters"
+                : "This folder is empty"}
             </p>
           </div>
         )}
@@ -430,31 +464,46 @@ const VideoExplorer = () => {
 
               {selectedVideo.description && (
                 <div>
-                  <h4 className="font-semibold text-slate-800 mb-2">Description</h4>
+                  <h4 className="font-semibold text-slate-800 mb-2">
+                    Description
+                  </h4>
                   <p className="text-slate-600">{selectedVideo.description}</p>
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-semibold text-slate-800 mb-2">Duration</h4>
-                  <p className="text-slate-600">{formatDuration(selectedVideo.duration)}</p>
+                  <h4 className="font-semibold text-slate-800 mb-2">
+                    Duration
+                  </h4>
+                  <p className="text-slate-600">
+                    {formatDuration(selectedVideo.duration)}
+                  </p>
                 </div>
                 <div>
                   <h4 className="font-semibold text-slate-800 mb-2">Format</h4>
-                  <p className="text-slate-600 uppercase">{selectedVideo.format}</p>
+                  <p className="text-slate-600 uppercase">
+                    {selectedVideo.format}
+                  </p>
                 </div>
                 {selectedVideo.resolution && (
                   <div>
-                    <h4 className="font-semibold text-slate-800 mb-2">Resolution</h4>
+                    <h4 className="font-semibold text-slate-800 mb-2">
+                      Resolution
+                    </h4>
                     <p className="text-slate-600">
-                      {selectedVideo.resolution.width}x{selectedVideo.resolution.height}
+                      {selectedVideo.resolution.width}x
+                      {selectedVideo.resolution.height}
                     </p>
                   </div>
                 )}
                 <div>
-                  <h4 className="font-semibold text-slate-800 mb-2">File Size</h4>
-                  <p className="text-slate-600">{formatFileSize(selectedVideo.fileSize)}</p>
+                  <h4 className="font-semibold text-slate-800 mb-2">
+                    File Size
+                  </h4>
+                  <p className="text-slate-600">
+                    {formatFileSize(selectedVideo.fileSize)}
+                  </p>
                 </div>
               </div>
 
@@ -462,11 +511,17 @@ const VideoExplorer = () => {
                 <div>
                   {selectedVideo.discountPrice ? (
                     <div className="flex items-center space-x-2">
-                      <span className="text-lg text-slate-500 line-through">₹{selectedVideo.basePrice}</span>
-                      <span className="text-3xl font-bold text-purple-600">₹{selectedVideo.discountPrice}</span>
+                      <span className="text-lg text-slate-500 line-through">
+                        ₹{selectedVideo.basePrice}
+                      </span>
+                      <span className="text-3xl font-bold text-purple-600">
+                        ₹{selectedVideo.discountPrice}
+                      </span>
                     </div>
                   ) : (
-                    <span className="text-3xl font-bold text-purple-600">₹{selectedVideo.basePrice}</span>
+                    <span className="text-3xl font-bold text-purple-600">
+                      ₹{selectedVideo.basePrice}
+                    </span>
                   )}
                 </div>
                 <Button

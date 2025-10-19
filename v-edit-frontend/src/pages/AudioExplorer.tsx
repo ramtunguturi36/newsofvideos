@@ -1,10 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import React, { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Music,
   Folder as FolderIcon,
@@ -26,12 +31,12 @@ import {
   Heart,
   CheckCircle,
   Disc,
-  Radio
-} from 'lucide-react';
-import { getAudioHierarchy } from '@/lib/backend';
-import { useCart } from '@/context/CartContext';
-import { toast } from 'sonner';
-import type { AudioFolder, AudioContent } from '@/lib/types';
+  Radio,
+} from "lucide-react";
+import { getAudioHierarchy } from "@/lib/backend";
+import { useCart } from "@/context/CartContext";
+import { toast } from "sonner";
+import type { AudioFolder, AudioContent } from "@/lib/types";
 
 const AudioExplorer = () => {
   const navigate = useNavigate();
@@ -40,14 +45,14 @@ const AudioExplorer = () => {
   const [audio, setAudio] = useState<AudioContent[]>([]);
   const [path, setPath] = useState<AudioFolder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
   const [selectedAudio, setSelectedAudio] = useState<AudioContent | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const { addItem } = useCart();
 
-  const currentFolderId = params.get('folderId');
+  const currentFolderId = params.get("folderId");
 
   useEffect(() => {
     loadHierarchy();
@@ -61,8 +66,8 @@ const AudioExplorer = () => {
       setAudio(data.audio || []);
       setPath(data.path || []);
     } catch (error) {
-      console.error('Error loading audio hierarchy:', error);
-      toast.error('Failed to load audio content');
+      console.error("Error loading audio hierarchy:", error);
+      toast.error("Failed to load audio content");
     } finally {
       setLoading(false);
     }
@@ -89,9 +94,9 @@ const AudioExplorer = () => {
     const price = audioItem.discountPrice || audioItem.basePrice;
     addItem({
       id: audioItem._id,
-      type: 'audio-content',
+      type: "audio-content",
       title: audioItem.title,
-      price
+      price,
     });
     toast.success(`${audioItem.title} added to cart!`);
   };
@@ -102,36 +107,43 @@ const AudioExplorer = () => {
   };
 
   const formatDuration = (seconds?: number) => {
-    if (!seconds) return 'N/A';
+    if (!seconds) return "N/A";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   const formatFileSize = (bytes?: number) => {
-    if (!bytes) return 'N/A';
+    if (!bytes) return "N/A";
     const mb = bytes / (1024 * 1024);
     return `${mb.toFixed(2)} MB`;
   };
 
   const formatBitrate = (bitrate?: number) => {
-    if (!bitrate) return 'N/A';
+    if (!bitrate) return "N/A";
     return `${Math.round(bitrate / 1000)} kbps`;
   };
 
-  const filteredAudio = audio.filter(audioItem => {
-    const matchesSearch = audioItem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        audioItem.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        audioItem.artist?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        audioItem.album?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        audioItem.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = filterCategory === 'all' || audioItem.category === filterCategory;
+  const filteredAudio = audio.filter((audioItem) => {
+    const matchesSearch =
+      audioItem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      audioItem.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      audioItem.artist?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      audioItem.album?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      audioItem.tags?.some((tag) =>
+        tag.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
+    const matchesCategory =
+      filterCategory === "all" || audioItem.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const filteredFolders = folders.filter(folder => {
-    const matchesSearch = folder.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || folder.category === filterCategory;
+  const filteredFolders = folders.filter((folder) => {
+    const matchesSearch = folder.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      filterCategory === "all" || folder.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -164,7 +176,7 @@ const AudioExplorer = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <Button
-                  onClick={() => navigate('/user/dashboard')}
+                  onClick={() => navigate("/user/dashboard")}
                   className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl px-6 py-3 font-semibold"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
@@ -232,18 +244,18 @@ const AudioExplorer = () => {
               </div>
               <div className="flex bg-slate-100 rounded-xl p-1">
                 <Button
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  variant={viewMode === "grid" ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className={`rounded-lg ${viewMode === 'grid' ? 'bg-white shadow-md' : ''}`}
+                  onClick={() => setViewMode("grid")}
+                  className={`rounded-lg ${viewMode === "grid" ? "bg-white shadow-md" : ""}`}
                 >
                   <Grid className="h-4 w-4" />
                 </Button>
                 <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  variant={viewMode === "list" ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => setViewMode('list')}
-                  className={`rounded-lg ${viewMode === 'list' ? 'bg-white shadow-md' : ''}`}
+                  onClick={() => setViewMode("list")}
+                  className={`rounded-lg ${viewMode === "list" ? "bg-white shadow-md" : ""}`}
                 >
                   <List className="h-4 w-4" />
                 </Button>
@@ -271,7 +283,10 @@ const AudioExplorer = () => {
                       <div className="p-3 bg-gradient-to-br from-orange-100 to-pink-100 rounded-xl group-hover:from-orange-200 group-hover:to-pink-200 transition-colors">
                         <FolderIcon className="h-8 w-8 text-orange-600" />
                       </div>
-                      <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                      <Badge
+                        variant="secondary"
+                        className="bg-orange-100 text-orange-700"
+                      >
                         {folder.totalAudio || 0} tracks
                       </Badge>
                     </div>
@@ -284,7 +299,10 @@ const AudioExplorer = () => {
                       </p>
                     )}
                     {folder.category && (
-                      <Badge variant="outline" className="mt-3 border-orange-300 text-orange-700">
+                      <Badge
+                        variant="outline"
+                        className="mt-3 border-orange-300 text-orange-700"
+                      >
                         {folder.category}
                       </Badge>
                     )}
@@ -302,7 +320,9 @@ const AudioExplorer = () => {
               <Music className="h-6 w-6 mr-2 text-orange-600" />
               Audio Tracks ({filteredAudio.length})
             </h2>
-            <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'} gap-6`}>
+            <div
+              className={`grid ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"} gap-6`}
+            >
               {filteredAudio.map((audioItem) => (
                 <Card
                   key={audioItem._id}
@@ -348,17 +368,23 @@ const AudioExplorer = () => {
                           {audioItem.album}
                         </p>
                       )}
-                      {audioItem.description && !audioItem.artist && (
-                        <p className="text-sm text-slate-600 line-clamp-2">
-                          {audioItem.description}
-                        </p>
-                      )}
+                      {audioItem.description &&
+                        !audioItem.artist &&
+                        !audioItem.album && (
+                          <p className="text-sm text-slate-600 line-clamp-2">
+                            {audioItem.description}
+                          </p>
+                        )}
                     </div>
 
                     {audioItem.tags && audioItem.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {audioItem.tags.slice(0, 3).map((tag, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-xs bg-orange-50 text-orange-700">
+                          <Badge
+                            key={idx}
+                            variant="secondary"
+                            className="text-xs bg-orange-50 text-orange-700"
+                          >
                             <Tag className="h-3 w-3 mr-1" />
                             {tag}
                           </Badge>
@@ -370,11 +396,17 @@ const AudioExplorer = () => {
                       <div>
                         {audioItem.discountPrice ? (
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm text-slate-500 line-through">₹{audioItem.basePrice}</span>
-                            <span className="text-xl font-bold text-orange-600">₹{audioItem.discountPrice}</span>
+                            <span className="text-sm text-slate-500 line-through">
+                              ₹{audioItem.basePrice}
+                            </span>
+                            <span className="text-xl font-bold text-orange-600">
+                              ₹{audioItem.discountPrice}
+                            </span>
                           </div>
                         ) : (
-                          <span className="text-xl font-bold text-orange-600">₹{audioItem.basePrice}</span>
+                          <span className="text-xl font-bold text-orange-600">
+                            ₹{audioItem.basePrice}
+                          </span>
                         )}
                       </div>
                       <div className="flex space-x-2">
@@ -411,11 +443,13 @@ const AudioExplorer = () => {
         {filteredFolders.length === 0 && filteredAudio.length === 0 && (
           <div className="text-center py-20 bg-white/90 backdrop-blur-lg rounded-2xl border border-slate-200/50">
             <Music className="h-20 w-20 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-2xl font-bold text-slate-700 mb-2">No audio found</h3>
+            <h3 className="text-2xl font-bold text-slate-700 mb-2">
+              No audio found
+            </h3>
             <p className="text-slate-500">
-              {searchTerm || filterCategory !== 'all'
-                ? 'Try adjusting your search or filters'
-                : 'This folder is empty'}
+              {searchTerm || filterCategory !== "all"
+                ? "Try adjusting your search or filters"
+                : "This folder is empty"}
             </p>
           </div>
         )}
@@ -471,27 +505,41 @@ const AudioExplorer = () => {
 
               {selectedAudio.description && (
                 <div>
-                  <h4 className="font-semibold text-slate-800 mb-2">Description</h4>
+                  <h4 className="font-semibold text-slate-800 mb-2">
+                    Description
+                  </h4>
                   <p className="text-slate-600">{selectedAudio.description}</p>
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-semibold text-slate-800 mb-2">Duration</h4>
-                  <p className="text-slate-600">{formatDuration(selectedAudio.duration)}</p>
+                  <h4 className="font-semibold text-slate-800 mb-2">
+                    Duration
+                  </h4>
+                  <p className="text-slate-600">
+                    {formatDuration(selectedAudio.duration)}
+                  </p>
                 </div>
                 <div>
                   <h4 className="font-semibold text-slate-800 mb-2">Format</h4>
-                  <p className="text-slate-600 uppercase">{selectedAudio.format}</p>
+                  <p className="text-slate-600 uppercase">
+                    {selectedAudio.format}
+                  </p>
                 </div>
                 <div>
                   <h4 className="font-semibold text-slate-800 mb-2">Bitrate</h4>
-                  <p className="text-slate-600">{formatBitrate(selectedAudio.bitrate)}</p>
+                  <p className="text-slate-600">
+                    {formatBitrate(selectedAudio.bitrate)}
+                  </p>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-slate-800 mb-2">File Size</h4>
-                  <p className="text-slate-600">{formatFileSize(selectedAudio.fileSize)}</p>
+                  <h4 className="font-semibold text-slate-800 mb-2">
+                    File Size
+                  </h4>
+                  <p className="text-slate-600">
+                    {formatFileSize(selectedAudio.fileSize)}
+                  </p>
                 </div>
               </div>
 
@@ -500,7 +548,11 @@ const AudioExplorer = () => {
                   <h4 className="font-semibold text-slate-800 mb-2">Tags</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedAudio.tags.map((tag, idx) => (
-                      <Badge key={idx} variant="secondary" className="bg-orange-50 text-orange-700">
+                      <Badge
+                        key={idx}
+                        variant="secondary"
+                        className="bg-orange-50 text-orange-700"
+                      >
                         {tag}
                       </Badge>
                     ))}
@@ -512,11 +564,17 @@ const AudioExplorer = () => {
                 <div>
                   {selectedAudio.discountPrice ? (
                     <div className="flex items-center space-x-2">
-                      <span className="text-lg text-slate-500 line-through">₹{selectedAudio.basePrice}</span>
-                      <span className="text-3xl font-bold text-orange-600">₹{selectedAudio.discountPrice}</span>
+                      <span className="text-lg text-slate-500 line-through">
+                        ₹{selectedAudio.basePrice}
+                      </span>
+                      <span className="text-3xl font-bold text-orange-600">
+                        ₹{selectedAudio.discountPrice}
+                      </span>
                     </div>
                   ) : (
-                    <span className="text-3xl font-bold text-orange-600">₹{selectedAudio.basePrice}</span>
+                    <span className="text-3xl font-bold text-orange-600">
+                      ₹{selectedAudio.basePrice}
+                    </span>
                   )}
                 </div>
                 <Button

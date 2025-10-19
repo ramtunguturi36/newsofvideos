@@ -23,10 +23,14 @@ import PurchasedTemplates from "./pages/user/PurchasedTemplates";
 import PurchasedFolders from "./pages/user/PurchasedFolders";
 import MyPictureTemplates from "./pages/user/MyPictureTemplates";
 import MyPictureFolders from "./pages/user/MyPictureFolders";
+import MyVideoFolders from "./pages/user/MyVideoFolders";
+import MyAudioFolders from "./pages/user/MyAudioFolders";
 import MyVideoContent from "./pages/user/MyVideoContent";
 import MyAudioContent from "./pages/user/MyAudioContent";
 import FolderMarketplace from "./pages/FolderMarketplace";
 import PictureFolderMarketplace from "./pages/PictureFolderMarketplace";
+import VideoFolderMarketplace from "./pages/VideoFolderMarketplace";
+import AudioFolderMarketplace from "./pages/AudioFolderMarketplace";
 import PictureExplorer from "./pages/PictureExplorer";
 import VideoExplorer from "./pages/VideoExplorer";
 import AudioExplorer from "./pages/AudioExplorer";
@@ -88,7 +92,9 @@ function App() {
               element={<PictureFolderMarketplace />}
             />
             <Route path="/picture-templates" element={<PictureExplorer />} />
+            <Route path="/video-folders" element={<VideoFolderMarketplace />} />
             <Route path="/video-content" element={<VideoExplorer />} />
+            <Route path="/audio-folders" element={<AudioFolderMarketplace />} />
             <Route path="/audio-content" element={<AudioExplorer />} />
             <Route path="/login" element={<Login />} />
             <Route path="/login/admin" element={<AdminLogin />} />
@@ -116,7 +122,9 @@ function App() {
                 element={<MyPictureTemplates />}
               />
               <Route path="picture-folders" element={<MyPictureFolders />} />
+              <Route path="video-folders" element={<MyVideoFolders />} />
               <Route path="video-content" element={<MyVideoContent />} />
+              <Route path="audio-folders" element={<MyAudioFolders />} />
               <Route path="audio-content" element={<MyAudioContent />} />
               <Route path="settings/*" element={<Settings />} />
             </Route>

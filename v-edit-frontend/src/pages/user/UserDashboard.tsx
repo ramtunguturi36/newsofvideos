@@ -198,7 +198,7 @@ const navigationSections = [
         description: "Browse and manage video templates",
       },
       {
-        name: "Video Folders",
+        name: "Template Folders",
         icon: ShoppingCart,
         path: "/folders",
         description: "Buy complete video template collections",
@@ -217,10 +217,22 @@ const navigationSections = [
         description: "Browse and purchase picture collections",
       },
       {
+        name: "Video Folders",
+        icon: FolderIcon,
+        path: "/video-folders",
+        description: "Browse and purchase video folder collections",
+      },
+      {
         name: "Video Content",
         icon: Film,
         path: "/video-content",
         description: "Browse and purchase video content",
+      },
+      {
+        name: "Audio Folders",
+        icon: FolderIcon,
+        path: "/audio-folders",
+        description: "Browse and purchase audio folder collections",
       },
       {
         name: "Audio Content",
@@ -247,10 +259,10 @@ const navigationSections = [
         description: "Access your purchased video templates",
       },
       {
-        name: "My Video Folders",
+        name: "My Template Folders",
         icon: FolderIcon,
         path: "/user/folders",
-        description: "Access your purchased video folder collections",
+        description: "Access your purchased video template collections",
       },
       {
         name: "My Picture Templates",
@@ -265,10 +277,22 @@ const navigationSections = [
         description: "Access your purchased picture folder collections",
       },
       {
+        name: "My Video Folders",
+        icon: FolderIcon,
+        path: "/user/video-folders",
+        description: "Access your purchased video folder collections",
+      },
+      {
         name: "My Video Content",
         icon: Film,
         path: "/user/video-content",
         description: "Access your purchased video content",
+      },
+      {
+        name: "My Audio Folders",
+        icon: FolderIcon,
+        path: "/user/audio-folders",
+        description: "Access your purchased audio folder collections",
       },
       {
         name: "My Audio Content",

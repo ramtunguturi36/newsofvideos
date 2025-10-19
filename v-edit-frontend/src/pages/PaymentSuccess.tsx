@@ -209,31 +209,8 @@ export default function PaymentSuccess() {
             });
             console.log("✅ Video content added");
           } else if (item.type === "video-folder") {
-            console.log("📁 Processing video folder");
-            // Video folder purchase
-            try {
-              const folderResponse = await backend.get(
-                `/video-content/video-hierarchy?folderId=${item.folderId || item.id}`,
-              );
-              const folderData = folderResponse.data;
-
-              if (folderData.videos && folderData.videos.length > 0) {
-                const folderVideos = folderData.videos.map((video: any) => ({
-                  _id: video._id,
-                  title: video.title,
-                  description: video.description || "",
-                  basePrice: video.basePrice,
-                  discountPrice: video.discountPrice,
-                  type: "video" as const,
-                  previewVideoUrl: video.previewVideoUrl,
-                  downloadVideoUrl: video.downloadVideoUrl,
-                  thumbnailUrl: video.thumbnailUrl,
-                }));
-                allContent.push(...folderVideos);
-              }
-            } catch (error) {
-              console.error("Error fetching video folder content:", error);
-            }
+            console.log("📁 Processing video folder - storing as folder item");
+            // Video folder purchase - don't add to allContent, will be handled in folders section
           } else if (item.type === "audio-content") {
             console.log("🎵 Processing audio content");
             // Audio content
@@ -250,31 +227,8 @@ export default function PaymentSuccess() {
             });
             console.log("✅ Audio content added");
           } else if (item.type === "audio-folder") {
-            console.log("📁 Processing audio folder");
-            // Audio folder purchase
-            try {
-              const folderResponse = await backend.get(
-                `/audio-content/audio-hierarchy?folderId=${item.folderId || item.id}`,
-              );
-              const folderData = folderResponse.data;
-
-              if (folderData.audio && folderData.audio.length > 0) {
-                const folderAudio = folderData.audio.map((audio: any) => ({
-                  _id: audio._id,
-                  title: audio.title,
-                  description: audio.description || "",
-                  basePrice: audio.basePrice,
-                  discountPrice: audio.discountPrice,
-                  type: "audio" as const,
-                  previewAudioUrl: audio.previewAudioUrl,
-                  downloadAudioUrl: audio.downloadAudioUrl,
-                  thumbnailUrl: audio.thumbnailUrl,
-                }));
-                allContent.push(...folderAudio);
-              }
-            } catch (error) {
-              console.error("Error fetching audio folder content:", error);
-            }
+            console.log("📁 Processing audio folder - storing as folder item");
+            // Audio folder purchase - don't add to allContent, will be handled in folders section
           }
         }
 
@@ -319,6 +273,70 @@ export default function PaymentSuccess() {
             } catch (error) {
               console.error("Error fetching picture folder templates:", error);
             }
+          } else if (item.type === "video-folder") {
+            try {
+              const folderResponse = await backend.get(
+                `/video-content/video-hierarchy?folderId=${item.folderId || item.id}`,
+              );
+              const folderData = folderResponse.data;
+
+              const folderVideos = (folderData.videos || []).map(
+                (video: any) => ({
+                  _id: video._id,
+                  title: video.title,
+                  description: video.description || "",
+                  basePrice: video.basePrice,
+                  discountPrice: video.discountPrice,
+                  type: "video" as const,
+                  previewVideoUrl: video.previewVideoUrl,
+                  downloadVideoUrl: video.downloadVideoUrl,
+                  thumbnailUrl: video.thumbnailUrl,
+                }),
+              );
+
+              folders.push({
+                _id: item.folderId || item.id,
+                title: item.title,
+                description: item.description,
+                type: "video-folder",
+                folderId: item.folderId || item.id,
+                templates: folderVideos,
+              });
+            } catch (error) {
+              console.error("Error fetching video folder content:", error);
+            }
+          } else if (item.type === "audio-folder") {
+            try {
+              const folderResponse = await backend.get(
+                `/audio-content/audio-hierarchy?folderId=${item.folderId || item.id}`,
+              );
+              const folderData = folderResponse.data;
+
+              const folderAudio = (folderData.audio || []).map(
+                (audio: any) => ({
+                  _id: audio._id,
+                  title: audio.title,
+                  description: audio.description || "",
+                  basePrice: audio.basePrice,
+                  discountPrice: audio.discountPrice,
+                  type: "audio" as const,
+                  previewAudioUrl: audio.previewAudioUrl,
+                  downloadAudioUrl: audio.downloadAudioUrl,
+                  thumbnailUrl: audio.thumbnailUrl,
+                }),
+              );
+
+              folders.push({
+                _id: item.folderId || item.id,
+                title: item.title,
+                description: item.description,
+                type: "audio-folder",
+                folderId: item.folderId || item.id,
+                templates: folderAudio,
+              });
+            } catch (error) {
+              console.error("Error fetching audio folder content:", error);
+            }
           }
         }
         setFolderItems(folders);
@@ -342,26 +360,44 @@ export default function PaymentSuccess() {
 
   const handleDownloadAll = async (folder: FolderItem) => {
     try {
-      toast.info(`Downloading ${folder.templates.length} pictures...`);
+      const itemType =
+        folder.type === "picture-folder"
+          ? "pictures"
+          : folder.type === "video-folder"
+            ? "videos"
+            : "audio tracks";
+      const fileExt =
+        folder.type === "picture-folder"
+          ? "png"
+          : folder.type === "video-folder"
+            ? "mp4"
+            : "mp3";
+
+      toast.info(`Downloading ${folder.templates.length} ${itemType}...`);
 
       for (let i = 0; i < folder.templates.length; i++) {
         const template = folder.templates[i];
-        if (template.downloadImageUrl) {
+        const downloadUrl =
+          template.downloadImageUrl ||
+          template.downloadVideoUrl ||
+          template.downloadAudioUrl;
+
+        if (downloadUrl) {
           await handleDownload(
-            template.downloadImageUrl,
-            `${folder.title.replace(/\s+/g, "-")}-${i + 1}-${template.title.replace(/\s+/g, "-")}.png`,
+            downloadUrl,
+            `${folder.title}-${i + 1}-${template.title.replace(/\s+/g, "-")}.${fileExt}`,
           );
-          // Add a small delay between downloads to avoid overwhelming the browser
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          // Add a longer delay between downloads to avoid browser limits
+          await new Promise((resolve) => setTimeout(resolve, 2000));
         }
       }
 
       toast.success(
-        `Successfully downloaded all ${folder.templates.length} pictures!`,
+        `Successfully downloaded ${folder.templates.length} ${itemType}!`,
       );
     } catch (error) {
-      console.error("Download all error:", error);
-      toast.error("Failed to download some pictures. Please try again.");
+      console.error("Error downloading all items:", error);
+      toast.error("Failed to download some items");
     }
   };
 
@@ -434,9 +470,15 @@ export default function PaymentSuccess() {
   const videoContent = contentItems.filter((item) => item.type === "video");
   const audioContent = contentItems.filter((item) => item.type === "audio");
 
-  // Get picture folders
+  // Get folders by type
   const pictureFolders = folderItems.filter(
     (item) => item.type === "picture-folder",
+  );
+  const videoFolders = folderItems.filter(
+    (item) => item.type === "video-folder",
+  );
+  const audioFolders = folderItems.filter(
+    (item) => item.type === "audio-folder",
   );
 
   return (
@@ -925,6 +967,98 @@ export default function PaymentSuccess() {
           </motion.div>
         )}
 
+        {/* Video Folders Section */}
+        {videoFolders.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+            className="my-12"
+          >
+            <h2 className="text-3xl font-bold mb-8 flex items-center bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+              <svg
+                className="w-8 h-8 mr-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                />
+              </svg>
+              Your Video Folders
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {videoFolders.map((folder, idx) => (
+                <motion.div
+                  key={folder._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.8 + idx * 0.1 }}
+                >
+                  <Card className="bg-white/10 backdrop-blur-lg border border-white/20 hover:border-white/30 transition-all duration-300 hover:shadow-2xl">
+                    <CardContent className="p-8">
+                      <div className="flex items-start justify-between mb-6">
+                        <div className="flex-1">
+                          <h3 className="font-bold text-2xl mb-3 text-white">
+                            {folder.title}
+                          </h3>
+                          {folder.description && (
+                            <p className="text-white/70 mb-4">
+                              {folder.description}
+                            </p>
+                          )}
+                          <div className="flex items-center text-white/80">
+                            <svg
+                              className="w-5 h-5 mr-2"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                              />
+                            </svg>
+                            <span className="font-semibold">
+                              {folder.templates.length} Videos
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleDownloadAll(folder)}
+                        className="flex items-center justify-center w-full px-6 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 rounded-xl text-white font-bold text-lg transform hover:scale-105 shadow-lg"
+                      >
+                        <svg
+                          className="w-6 h-6 mr-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                          />
+                        </svg>
+                        Download All Videos ({folder.templates.length})
+                      </button>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* Video Content Section */}
         {videoContent.length > 0 && (
           <motion.div
@@ -1012,6 +1146,98 @@ export default function PaymentSuccess() {
                           Download Video
                         </button>
                       )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Audio Folders Section */}
+        {audioFolders.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+            className="my-12"
+          >
+            <h2 className="text-3xl font-bold mb-8 flex items-center bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
+              <svg
+                className="w-8 h-8 mr-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                />
+              </svg>
+              Your Audio Folders
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {audioFolders.map((folder, idx) => (
+                <motion.div
+                  key={folder._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.8 + idx * 0.1 }}
+                >
+                  <Card className="bg-white/10 backdrop-blur-lg border border-white/20 hover:border-white/30 transition-all duration-300 hover:shadow-2xl">
+                    <CardContent className="p-8">
+                      <div className="flex items-start justify-between mb-6">
+                        <div className="flex-1">
+                          <h3 className="font-bold text-2xl mb-3 text-white">
+                            {folder.title}
+                          </h3>
+                          {folder.description && (
+                            <p className="text-white/70 mb-4">
+                              {folder.description}
+                            </p>
+                          )}
+                          <div className="flex items-center text-white/80">
+                            <svg
+                              className="w-5 h-5 mr-2"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+                              />
+                            </svg>
+                            <span className="font-semibold">
+                              {folder.templates.length} Audio Tracks
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleDownloadAll(folder)}
+                        className="flex items-center justify-center w-full px-6 py-4 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition-all duration-300 rounded-xl text-white font-bold text-lg transform hover:scale-105 shadow-lg"
+                      >
+                        <svg
+                          className="w-6 h-6 mr-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                          />
+                        </svg>
+                        Download All Audio ({folder.templates.length})
+                      </button>
                     </CardContent>
                   </Card>
                 </motion.div>

@@ -165,6 +165,44 @@ const MyPictureFolders = () => {
       return sortOrder === "asc" ? comparison : -comparison;
     });
 
+  const handleDownload = async (url: string, filename: string) => {
+    try {
+      // Use backend proxy to download with proper headers and avoid CORS
+      const backendUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const proxyUrl = `${backendUrl}/api/download-proxy?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`;
+
+      // Get auth token from localStorage
+      const token = localStorage.getItem("token");
+
+      // Fetch with credentials and auth token
+      const response = await fetch(proxyUrl, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Download error:", error);
+      throw error;
+    }
+  };
+
   const handleDownloadAll = async (folder: PictureFolder) => {
     try {
       // Load templates in the folder first
@@ -182,22 +220,17 @@ const MyPictureFolders = () => {
       for (let i = 0; i < folderTemplates.length; i++) {
         const template = folderTemplates[i];
         if (template.downloadImageUrl) {
-          // Create a temporary link and click it
-          const link = document.createElement("a");
-          link.href = template.downloadImageUrl;
-          link.download = `${folder.name}-${i + 1}-${template.title}.png`;
-          link.target = "_blank";
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-
-          // Add a small delay between downloads
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          await handleDownload(
+            template.downloadImageUrl,
+            `${folder.name}-${i + 1}-${template.title}.png`,
+          );
+          // Add a longer delay between downloads to avoid browser limits
+          await new Promise((resolve) => setTimeout(resolve, 2000));
         }
       }
 
       toast.success(
-        `Successfully started download of ${folderTemplates.length} pictures!`,
+        `Successfully downloaded ${folderTemplates.length} pictures!`,
       );
     } catch (error) {
       console.error("Download all error:", error);
