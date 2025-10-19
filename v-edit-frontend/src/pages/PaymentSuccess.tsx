@@ -61,11 +61,21 @@ type ContentItem = {
   thumbnailUrl?: string;
 };
 
+type FolderItem = {
+  _id: string;
+  title: string;
+  description?: string;
+  type: "picture-folder" | "video-folder" | "audio-folder";
+  folderId: string;
+  templates: ContentItem[];
+};
+
 export default function PaymentSuccess() {
   const location = useLocation();
   const navigate = useNavigate();
   const [purchase, setPurchase] = useState<Purchase | null>(null);
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
+  const [folderItems, setFolderItems] = useState<FolderItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -178,32 +188,11 @@ export default function PaymentSuccess() {
             });
             console.log("✅ Picture template added");
           } else if (item.type === "picture-folder") {
-            console.log("📁 Processing picture folder");
-            // Picture folder purchase
-            try {
-              const folderResponse = await backend.get(
-                `/picture-content/picture-hierarchy?folderId=${item.folderId || item.id}`,
-              );
-              const folderData = folderResponse.data;
-
-              if (folderData.templates && folderData.templates.length > 0) {
-                const folderTemplates = folderData.templates.map(
-                  (template: any) => ({
-                    _id: template._id,
-                    title: template.title,
-                    description: template.description || "",
-                    basePrice: template.basePrice,
-                    discountPrice: template.discountPrice,
-                    type: "picture" as const,
-                    previewImageUrl: template.previewImageUrl,
-                    downloadImageUrl: template.downloadImageUrl,
-                  }),
-                );
-                allContent.push(...folderTemplates);
-              }
-            } catch (error) {
-              console.error("Error fetching picture folder templates:", error);
-            }
+            console.log(
+              "📁 Processing picture folder - storing as folder item",
+            );
+            // Picture folder purchase - store as folder item instead of individual templates
+            // This will be displayed with Download All button
           } else if (item.type === "video-content") {
             console.log("🎬 Processing video content");
             // Video content
@@ -295,6 +284,44 @@ export default function PaymentSuccess() {
         );
         console.log("✅ Final content array:", allContent);
         setContentItems(allContent);
+
+        // Process folders separately
+        const folders: FolderItem[] = [];
+        for (const item of purchaseData.items) {
+          if (item.type === "picture-folder") {
+            try {
+              const folderResponse = await backend.get(
+                `/picture-content/picture-hierarchy?folderId=${item.folderId || item.id}`,
+              );
+              const folderData = folderResponse.data;
+
+              const folderTemplates = (folderData.templates || []).map(
+                (template: any) => ({
+                  _id: template._id,
+                  title: template.title,
+                  description: template.description || "",
+                  basePrice: template.basePrice,
+                  discountPrice: template.discountPrice,
+                  type: "picture" as const,
+                  previewImageUrl: template.previewImageUrl,
+                  downloadImageUrl: template.downloadImageUrl,
+                }),
+              );
+
+              folders.push({
+                _id: item.folderId || item.id,
+                title: item.title,
+                description: item.description,
+                type: "picture-folder",
+                folderId: item.folderId || item.id,
+                templates: folderTemplates,
+              });
+            } catch (error) {
+              console.error("Error fetching picture folder templates:", error);
+            }
+          }
+        }
+        setFolderItems(folders);
         console.log("✅ PaymentSuccess data loading completed successfully");
       } catch (err: unknown) {
         console.error("❌ Error fetching purchase details:", err);
@@ -312,6 +339,31 @@ export default function PaymentSuccess() {
 
     fetchPurchase();
   }, [location, navigate]);
+
+  const handleDownloadAll = async (folder: FolderItem) => {
+    try {
+      toast.info(`Downloading ${folder.templates.length} pictures...`);
+
+      for (let i = 0; i < folder.templates.length; i++) {
+        const template = folder.templates[i];
+        if (template.downloadImageUrl) {
+          await handleDownload(
+            template.downloadImageUrl,
+            `${folder.title.replace(/\s+/g, "-")}-${i + 1}-${template.title.replace(/\s+/g, "-")}.png`,
+          );
+          // Add a small delay between downloads to avoid overwhelming the browser
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      }
+
+      toast.success(
+        `Successfully downloaded all ${folder.templates.length} pictures!`,
+      );
+    } catch (error) {
+      console.error("Download all error:", error);
+      toast.error("Failed to download some pictures. Please try again.");
+    }
+  };
 
   const handleDownload = async (url: string, filename: string) => {
     try {
@@ -381,6 +433,11 @@ export default function PaymentSuccess() {
   const pictureContent = contentItems.filter((item) => item.type === "picture");
   const videoContent = contentItems.filter((item) => item.type === "video");
   const audioContent = contentItems.filter((item) => item.type === "audio");
+
+  // Get picture folders
+  const pictureFolders = folderItems.filter(
+    (item) => item.type === "picture-folder",
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-4">
@@ -667,6 +724,107 @@ export default function PaymentSuccess() {
                           Download QR Code
                         </button>
                       )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Picture Folders Section */}
+        {pictureFolders.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+            className="my-12"
+          >
+            <h2 className="text-3xl font-bold mb-8 flex items-center bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
+              <svg
+                className="w-8 h-8 mr-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                />
+              </svg>
+              Your Picture Folders
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {pictureFolders.map((folder, idx) => (
+                <motion.div
+                  key={folder._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.8 + idx * 0.1 }}
+                >
+                  <Card className="bg-white/10 backdrop-blur-lg border border-white/20 hover:border-white/30 transition-all duration-300 hover:shadow-xl group">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <h3 className="font-bold text-2xl mb-2 text-white group-hover:text-pink-300 transition-colors">
+                            {folder.title}
+                          </h3>
+                          {folder.description && (
+                            <p className="text-sm text-white/70 mb-3">
+                              {folder.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <span className="bg-pink-500/20 text-pink-300 px-3 py-1 rounded-full text-sm font-medium">
+                              {folder.templates.length} Pictures
+                            </span>
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <svg
+                            className="w-12 h-12 text-pink-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+
+                      <div className="mb-4">
+                        <p className="text-sm text-white/80 mb-3 text-center">
+                          This folder contains {folder.templates.length}{" "}
+                          high-quality pictures
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => handleDownloadAll(folder)}
+                        className="flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 transition-all duration-300 rounded-lg text-white font-semibold transform hover:scale-105"
+                      >
+                        <svg
+                          className="w-5 h-5 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                          />
+                        </svg>
+                        Download All {folder.templates.length} Pictures
+                      </button>
                     </CardContent>
                   </Card>
                 </motion.div>
