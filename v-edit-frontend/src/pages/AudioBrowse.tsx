@@ -129,14 +129,24 @@ export default function AudioBrowse() {
                 Back to Dashboard
               </Button>
               <div className="hidden sm:flex items-center space-x-2 text-sm text-slate-600">
-                <Home className="h-4 w-4" />
-                <ChevronRight className="h-4 w-4" />
-                <span className="font-medium text-slate-900">Audio</span>
+                <button
+                  onClick={() => navigate("/user/dashboard")}
+                  className="hover:text-purple-600 transition-colors"
+                >
+                  <Home className="h-4 w-4 flex-shrink-0" />
+                </button>
+                <ChevronRight className="h-4 w-4 flex-shrink-0 text-slate-400" />
+                <button
+                  onClick={() => navigate("/audio-content")}
+                  className="font-medium text-slate-900 hover:text-purple-600 transition-colors"
+                >
+                  Audio
+                </button>
                 {path.length > 0 && (
                   <>
                     {path.map((folder, index) => (
                       <React.Fragment key={folder._id}>
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronRight className="h-4 w-4 flex-shrink-0 text-slate-400" />
                         {index === path.length - 1 ? (
                           <span className="font-medium text-slate-900">
                             {folder.name}
