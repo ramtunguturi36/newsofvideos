@@ -137,15 +137,21 @@ export default function VideoTemplatesBrowse() {
                 </span>
                 {path.length > 0 && (
                   <>
-                    {path.map((folder) => (
+                    {path.map((folder, index) => (
                       <React.Fragment key={folder._id}>
                         <ChevronRight className="h-4 w-4" />
-                        <button
-                          onClick={() => navigateToFolder(folder._id)}
-                          className="hover:text-purple-600 transition-colors"
-                        >
-                          {folder.name}
-                        </button>
+                        {index === path.length - 1 ? (
+                          <span className="font-medium text-slate-900">
+                            {folder.name}
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => navigateToFolder(folder._id)}
+                            className="hover:text-purple-600 transition-colors font-medium"
+                          >
+                            {folder.name}
+                          </button>
+                        )}
                       </React.Fragment>
                     ))}
                   </>
@@ -209,147 +215,148 @@ export default function VideoTemplatesBrowse() {
           </p>
         </div>
 
-        {/* Folders Grid */}
-        {filteredFolders.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
-              <FolderOpen className="h-6 w-6 mr-2 text-blue-600" />
-              {filterType === "bundles"
-                ? "Bundle Deals"
-                : filterType === "free"
-                  ? "Browse Categories"
-                  : "All Categories"}
-              <span className="ml-3 text-sm font-normal text-slate-500">
-                ({filteredFolders.length})
-              </span>
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredFolders.map((folder) => (
-                <div
-                  key={folder._id}
-                  className={`group rounded-2xl overflow-hidden border-2 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 ${
-                    folder.isPurchasable
-                      ? "border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50"
-                      : "border-slate-200 bg-white"
-                  }`}
-                >
-                  {/* Folder Badge */}
-                  {folder.isPurchasable && (
-                    <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1 flex items-center justify-center">
-                      <Gift className="h-3 w-3 mr-1" />
-                      BUNDLE DEAL - SAVE BIG!
-                    </div>
-                  )}
-
-                  {/* Folder Image */}
+        {/* Folders Grid - Only show when at root or has subfolders */}
+        {filteredFolders.length > 0 &&
+          (folderId === undefined || filteredFolders.length > 0) && (
+            <div className="mb-12">
+              <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+                <FolderOpen className="h-6 w-6 mr-2 text-blue-600" />
+                {filterType === "bundles"
+                  ? "Bundle Deals"
+                  : filterType === "free"
+                    ? "Browse Categories"
+                    : "All Categories"}
+                <span className="ml-3 text-sm font-normal text-slate-500">
+                  ({filteredFolders.length})
+                </span>
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredFolders.map((folder) => (
                   <div
-                    className="relative aspect-video overflow-hidden bg-slate-100 cursor-pointer"
-                    onClick={() =>
-                      !folder.isPurchasable && navigateToFolder(folder._id)
-                    }
+                    key={folder._id}
+                    className={`group rounded-2xl overflow-hidden border-2 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 ${
+                      folder.isPurchasable
+                        ? "border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50"
+                        : "border-slate-200 bg-white"
+                    }`}
                   >
-                    {folder.coverPhotoUrl ? (
-                      <img
-                        src={folder.coverPhotoUrl}
-                        alt={folder.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div
-                        className={`w-full h-full flex items-center justify-center ${
-                          folder.isPurchasable
-                            ? "bg-gradient-to-r from-amber-100 to-orange-100"
-                            : "bg-gradient-to-r from-blue-100 to-cyan-100"
-                        }`}
-                      >
-                        <FolderOpen
-                          className={`h-16 w-16 ${
-                            folder.isPurchasable
-                              ? "text-amber-600"
-                              : "text-blue-600"
-                          }`}
-                        />
+                    {/* Folder Badge */}
+                    {folder.isPurchasable && (
+                      <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1 flex items-center justify-center">
+                        <Gift className="h-3 w-3 mr-1" />
+                        BUNDLE DEAL - SAVE BIG!
                       </div>
                     )}
-                  </div>
 
-                  {/* Folder Content */}
-                  <div className="p-5">
-                    <h3 className="text-lg font-bold text-slate-900 mb-2 line-clamp-1">
-                      {folder.name}
-                    </h3>
-
-                    {folder.isPurchasable ? (
-                      <>
-                        {/* Purchasable Folder */}
-                        <div className="mb-4">
-                          <div className="flex items-baseline space-x-2 mb-1">
-                            <span className="text-2xl font-bold text-slate-900">
-                              ₹{folder.discountPrice || folder.basePrice}
-                            </span>
-                            {folder.discountPrice && (
-                              <span className="text-sm text-slate-500 line-through">
-                                ₹{folder.basePrice}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-slate-600">
-                            💰 Bundle price • Or buy items individually
-                          </p>
+                    {/* Folder Image */}
+                    <div
+                      className="relative aspect-video overflow-hidden bg-slate-100 cursor-pointer"
+                      onClick={() =>
+                        !folder.isPurchasable && navigateToFolder(folder._id)
+                      }
+                    >
+                      {folder.coverPhotoUrl ? (
+                        <img
+                          src={folder.coverPhotoUrl}
+                          alt={folder.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div
+                          className={`w-full h-full flex items-center justify-center ${
+                            folder.isPurchasable
+                              ? "bg-gradient-to-r from-amber-100 to-orange-100"
+                              : "bg-gradient-to-r from-blue-100 to-cyan-100"
+                          }`}
+                        >
+                          <FolderOpen
+                            className={`h-16 w-16 ${
+                              folder.isPurchasable
+                                ? "text-amber-600"
+                                : "text-blue-600"
+                            }`}
+                          />
                         </div>
+                      )}
+                    </div>
 
-                        <div className="space-y-2">
-                          <Button
-                            onClick={() => handleAddToCart(folder, "folder")}
-                            disabled={isInCart(folder._id)}
-                            className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-full font-semibold shadow-lg"
-                          >
-                            {isInCart(folder._id) ? (
-                              <>
-                                <ShoppingCart className="h-4 w-4 mr-2" />
-                                In Cart
-                              </>
-                            ) : (
-                              <>
-                                <ShoppingCart className="h-4 w-4 mr-2" />
-                                Buy Bundle
-                              </>
-                            )}
-                          </Button>
+                    {/* Folder Content */}
+                    <div className="p-5">
+                      <h3 className="text-lg font-bold text-slate-900 mb-2 line-clamp-1">
+                        {folder.name}
+                      </h3>
+
+                      {folder.isPurchasable ? (
+                        <>
+                          {/* Purchasable Folder */}
+                          <div className="mb-4">
+                            <div className="flex items-baseline space-x-2 mb-1">
+                              <span className="text-2xl font-bold text-slate-900">
+                                ₹{folder.discountPrice || folder.basePrice}
+                              </span>
+                              {folder.discountPrice && (
+                                <span className="text-sm text-slate-500 line-through">
+                                  ₹{folder.basePrice}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-600">
+                              💰 Bundle price • Or buy items individually
+                            </p>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Button
+                              onClick={() => handleAddToCart(folder, "folder")}
+                              disabled={isInCart(folder._id)}
+                              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-full font-semibold shadow-lg"
+                            >
+                              {isInCart(folder._id) ? (
+                                <>
+                                  <ShoppingCart className="h-4 w-4 mr-2" />
+                                  In Cart
+                                </>
+                              ) : (
+                                <>
+                                  <ShoppingCart className="h-4 w-4 mr-2" />
+                                  Buy Bundle
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              onClick={() => navigateToFolder(folder._id)}
+                              variant="outline"
+                              className="w-full rounded-full border-2 border-slate-300 hover:border-slate-400"
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              Browse Items
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          {/* Free Browse Folder */}
+                          <p className="text-sm text-slate-600 mb-4">
+                            Browse free • Buy items individually
+                          </p>
                           <Button
                             onClick={() => navigateToFolder(folder._id)}
-                            variant="outline"
-                            className="w-full rounded-full border-2 border-slate-300 hover:border-slate-400"
+                            className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-full font-semibold"
                           >
                             <Eye className="h-4 w-4 mr-2" />
-                            Browse Items
+                            View Items
                           </Button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        {/* Free Browse Folder */}
-                        <p className="text-sm text-slate-600 mb-4">
-                          Browse free • Buy items individually
-                        </p>
-                        <Button
-                          onClick={() => navigateToFolder(folder._id)}
-                          className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-full font-semibold"
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Items
-                        </Button>
-                      </>
-                    )}
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Templates Grid */}
-        {filteredTemplates.length > 0 && (
+        {/* Templates Grid - Only show when inside a folder */}
+        {filteredTemplates.length > 0 && folderId && (
           <div>
             <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
               <Video className="h-6 w-6 mr-2 text-purple-600" />

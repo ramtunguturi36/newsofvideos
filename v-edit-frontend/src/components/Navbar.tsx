@@ -15,6 +15,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
+import CartDrawer from "@/components/CartDrawer";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ export default function Navbar() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
 
   const toggleUserMenu = () => {
     setUserMenuOpen(!userMenuOpen);
@@ -107,7 +109,7 @@ export default function Navbar() {
 
               {/* Cart */}
               <button
-                onClick={() => navigate("/user/cart")}
+                onClick={() => setCartOpen(true)}
                 className="relative p-2 rounded-full hover:bg-slate-100 transition-colors"
               >
                 <ShoppingCart className="h-5 w-5 text-slate-600" />
@@ -223,6 +225,9 @@ export default function Navbar() {
           </div>
         </div>
       )}
+
+      {/* Cart Drawer */}
+      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
     </>
   );
 }
