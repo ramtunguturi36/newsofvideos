@@ -43,6 +43,7 @@ export default function MyPurchasesTemplate({
   const [folders, setFolders] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     loadPurchases();
@@ -63,20 +64,128 @@ export default function MyPurchasesTemplate({
   };
 
   const handleDownload = async (item: any) => {
+    if (downloading) return;
+
     try {
+      setDownloading(true);
       toast.info("Preparing download...");
-      // Add download logic here
+
+      let downloadUrl = "";
+      let fileName = item.title || item.name || "download";
+
+      // Determine the download URL based on item type
+      switch (itemType) {
+        case "template":
+          // For video templates, download the QR code (not the video)
+          downloadUrl = item.qrUrl || "";
+          fileName = `${fileName}-qr.png`;
+          break;
+        case "picture":
+          downloadUrl = item.downloadImageUrl || item.previewImageUrl || "";
+          fileName = `${fileName}.jpg`;
+          break;
+        case "video":
+          downloadUrl = item.downloadVideoUrl || item.previewVideoUrl || "";
+          fileName = `${fileName}.mp4`;
+          break;
+        case "audio":
+          downloadUrl = item.downloadAudioUrl || item.previewAudioUrl || "";
+          fileName = `${fileName}.mp3`;
+          break;
+      }
+
+      if (!downloadUrl) {
+        toast.error("Download URL not available");
+        return;
+      }
+
+      // Use backend download proxy with authentication
+      const apiBaseUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const token = localStorage.getItem("token");
+      const proxyUrl = `${apiBaseUrl}/api/download-proxy?url=${encodeURIComponent(downloadUrl)}&filename=${encodeURIComponent(fileName)}`;
+
+      // Fetch file with authentication
+      const response = await fetch(proxyUrl, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.statusText}`);
+      }
+
+      // Get the blob from response
+      const blob = await response.blob();
+
+      // Create object URL and trigger download
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up the object URL
+      window.URL.revokeObjectURL(blobUrl);
+
+      toast.success("Download completed!");
     } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Download failed");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleDownloadFolder = async (folder: any) => {
+    try {
+      toast.info(
+        "Folder downloads coming soon! For now, download items individually from the Items tab.",
+      );
+    } catch (error) {
+      console.error("Folder download error:", error);
       toast.error("Download failed");
     }
   };
 
-  const filteredFolders = folders.filter((folder) =>
-    folder.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const handleOpenFolder = (folder: any) => {
+    // Navigate to the browse page with the folder ID
+    const folderId = folder.folderId || folder._id;
+    let basePath = "";
+
+    switch (itemType) {
+      case "template":
+        basePath = "/folders";
+        break;
+      case "picture":
+        basePath = "/picture-templates";
+        break;
+      case "video":
+        basePath = "/video-content";
+        break;
+      case "audio":
+        basePath = "/audio-content";
+        break;
+    }
+
+    if (basePath && folderId) {
+      navigate(`${basePath}?folderId=${folderId}`);
+    } else {
+      toast.error("Cannot open folder");
+    }
+  };
+
+  const filteredFolders = folders.filter((folder) => {
+    const folderName = folder.title || folder.name || "";
+    return folderName.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   const filteredItems = items.filter((item) => {
-    const title = item.title || item.name;
+    const title = item.title || item.name || "";
     return title.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
@@ -218,7 +327,7 @@ export default function MyPurchasesTemplate({
                       {folder.coverPhotoUrl ? (
                         <img
                           src={folder.coverPhotoUrl}
-                          alt={folder.name}
+                          alt={folder.title || folder.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
@@ -243,14 +352,14 @@ export default function MyPurchasesTemplate({
                     {/* Folder Content */}
                     <div className="p-5">
                       <h3 className="text-lg font-bold text-slate-900 mb-2 line-clamp-2">
-                        {folder.name}
+                        {folder.title || folder.name}
                       </h3>
                       <p className="text-sm text-slate-600 mb-4">
                         {folder.totalTemplates || folder.itemCount || 0} items
                       </p>
                       <div className="flex space-x-2">
                         <Button
-                          onClick={() => handleDownload(folder)}
+                          onClick={() => handleDownloadFolder(folder)}
                           variant="outline"
                           className="flex-1 rounded-full border-2"
                         >
@@ -258,6 +367,7 @@ export default function MyPurchasesTemplate({
                           Download All
                         </Button>
                         <Button
+                          onClick={() => handleOpenFolder(folder)}
                           className={`flex-1 bg-gradient-to-r ${gradient} hover:opacity-90 text-white rounded-full`}
                         >
                           <Eye className="h-4 w-4 mr-2" />
@@ -302,8 +412,16 @@ export default function MyPurchasesTemplate({
                   >
                     {/* Item Preview */}
                     <div className="relative aspect-video overflow-hidden bg-black">
-                      {item.videoUrl || item.previewImageUrl ? (
-                        itemType === "template" || itemType === "video" ? (
+                      {(itemType === "template" && item.qrUrl) ||
+                      item.videoUrl ||
+                      item.previewImageUrl ? (
+                        itemType === "template" ? (
+                          <img
+                            src={item.qrUrl}
+                            alt={item.title}
+                            className="w-full h-full object-contain bg-white group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : itemType === "video" ? (
                           <video
                             className="w-full h-full object-cover"
                             src={item.videoUrl}
@@ -341,10 +459,22 @@ export default function MyPurchasesTemplate({
                       </h3>
                       <Button
                         onClick={() => handleDownload(item)}
-                        className={`w-full bg-gradient-to-r ${gradient} hover:opacity-90 text-white rounded-full font-semibold`}
+                        disabled={downloading}
+                        className={`w-full bg-gradient-to-r ${gradient} hover:opacity-90 text-white rounded-full font-semibold ${downloading ? "opacity-50 cursor-not-allowed" : ""}`}
                       >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
+                        {downloading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Downloading...
+                          </>
+                        ) : (
+                          <>
+                            <Download className="h-4 w-4 mr-2" />
+                            {itemType === "template"
+                              ? "Download QR"
+                              : "Download"}
+                          </>
+                        )}
                       </Button>
                     </div>
                   </div>
