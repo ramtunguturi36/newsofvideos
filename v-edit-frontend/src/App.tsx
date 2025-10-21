@@ -27,13 +27,13 @@ import MyVideoFolders from "./pages/user/MyVideoFolders";
 import MyAudioFolders from "./pages/user/MyAudioFolders";
 import MyVideoContent from "./pages/user/MyVideoContent";
 import MyAudioContent from "./pages/user/MyAudioContent";
-import FolderMarketplace from "./pages/FolderMarketplace";
+import VideoTemplatesBrowse from "./pages/VideoTemplatesBrowse";
 import PictureFolderMarketplace from "./pages/PictureFolderMarketplace";
 import VideoFolderMarketplace from "./pages/VideoFolderMarketplace";
 import AudioFolderMarketplace from "./pages/AudioFolderMarketplace";
-import PictureExplorer from "./pages/PictureExplorer";
-import VideoExplorer from "./pages/VideoExplorer";
-import AudioExplorer from "./pages/AudioExplorer";
+import PicturesBrowse from "./pages/PicturesBrowse";
+import VideoContentBrowse from "./pages/VideoContentBrowse";
+import AudioBrowse from "./pages/AudioBrowse";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -86,16 +86,16 @@ function App() {
           <Toaster position="top-right" richColors />
           <Routes>
             <Route path="/" element={<Landing />} />
-            <Route path="/folders" element={<FolderMarketplace />} />
+            <Route path="/folders" element={<VideoTemplatesBrowse />} />
             <Route
               path="/picture-folders"
               element={<PictureFolderMarketplace />}
             />
-            <Route path="/picture-templates" element={<PictureExplorer />} />
+            <Route path="/picture-templates" element={<PicturesBrowse />} />
             <Route path="/video-folders" element={<VideoFolderMarketplace />} />
-            <Route path="/video-content" element={<VideoExplorer />} />
+            <Route path="/video-content" element={<VideoContentBrowse />} />
             <Route path="/audio-folders" element={<AudioFolderMarketplace />} />
-            <Route path="/audio-content" element={<AudioExplorer />} />
+            <Route path="/audio-content" element={<AudioBrowse />} />
             <Route path="/login" element={<Login />} />
             <Route path="/login/admin" element={<AdminLogin />} />
             <Route path="/register" element={<Register />} />
