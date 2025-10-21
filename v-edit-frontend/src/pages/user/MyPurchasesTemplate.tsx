@@ -142,13 +142,143 @@ export default function MyPurchasesTemplate({
   };
 
   const handleDownloadFolder = async (folder: any) => {
+    if (downloading) return;
+
     try {
-      toast.info(
-        "Folder downloads coming soon! For now, download items individually from the Items tab.",
-      );
+      setDownloading(true);
+      const folderId = folder.folderId || folder._id;
+
+      if (!folderId) {
+        toast.error("Folder ID not found");
+        return;
+      }
+
+      toast.info("Fetching folder contents...");
+
+      // Get all items in the folder
+      let response;
+      switch (itemType) {
+        case "template":
+          response = await backend.get(`/hierarchy?folderId=${folderId}`);
+          break;
+        case "picture":
+          response = await backend.get(
+            `/picture-content/hierarchy?folderId=${folderId}`,
+          );
+          break;
+        case "video":
+          response = await backend.get(
+            `/video-content/hierarchy?folderId=${folderId}`,
+          );
+          break;
+        case "audio":
+          response = await backend.get(
+            `/audio-content/hierarchy?folderId=${folderId}`,
+          );
+          break;
+        default:
+          toast.error("Invalid item type");
+          return;
+      }
+
+      // Get the items array based on response structure
+      const folderItems =
+        response.data.templates ||
+        response.data.pictures ||
+        response.data.videos ||
+        response.data.audio ||
+        [];
+
+      if (folderItems.length === 0) {
+        toast.info("No items found in this folder");
+        return;
+      }
+
+      toast.info(`Downloading ${folderItems.length} items...`);
+
+      // Download each item
+      let successCount = 0;
+      for (const item of folderItems) {
+        try {
+          let downloadUrl = "";
+          let fileName = item.title || item.name || "download";
+
+          // Determine download URL based on item type
+          switch (itemType) {
+            case "template":
+              downloadUrl = item.qrUrl || "";
+              fileName = `${fileName}-qr.png`;
+              break;
+            case "picture":
+              downloadUrl = item.downloadImageUrl || item.previewImageUrl || "";
+              fileName = `${fileName}.jpg`;
+              break;
+            case "video":
+              downloadUrl = item.downloadVideoUrl || item.previewVideoUrl || "";
+              fileName = `${fileName}.mp4`;
+              break;
+            case "audio":
+              downloadUrl = item.downloadAudioUrl || item.previewAudioUrl || "";
+              fileName = `${fileName}.mp3`;
+              break;
+          }
+
+          if (!downloadUrl) {
+            console.warn(`No download URL for item: ${fileName}`);
+            continue;
+          }
+
+          // Use backend download proxy
+          const apiBaseUrl =
+            import.meta.env.VITE_API_URL || "http://localhost:5000";
+          const token = localStorage.getItem("token");
+          const proxyUrl = `${apiBaseUrl}/api/download-proxy?url=${encodeURIComponent(downloadUrl)}&filename=${encodeURIComponent(fileName)}`;
+
+          // Fetch file with authentication
+          const fileResponse = await fetch(proxyUrl, {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (!fileResponse.ok) {
+            console.error(`Failed to download: ${fileName}`);
+            continue;
+          }
+
+          // Get the blob and download
+          const blob = await fileResponse.blob();
+          const blobUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = blobUrl;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(blobUrl);
+
+          successCount++;
+
+          // Small delay between downloads to avoid overwhelming the browser
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        } catch (itemError) {
+          console.error("Error downloading item:", itemError);
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(
+          `Downloaded ${successCount} of ${folderItems.length} items!`,
+        );
+      } else {
+        toast.error("Failed to download items");
+      }
     } catch (error) {
       console.error("Folder download error:", error);
-      toast.error("Download failed");
+      toast.error("Failed to download folder contents");
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -360,11 +490,21 @@ export default function MyPurchasesTemplate({
                       <div className="flex space-x-2">
                         <Button
                           onClick={() => handleDownloadFolder(folder)}
+                          disabled={downloading}
                           variant="outline"
-                          className="flex-1 rounded-full border-2"
+                          className={`flex-1 rounded-full border-2 ${downloading ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
-                          <Download className="h-4 w-4 mr-2" />
-                          Download All
+                          {downloading ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Downloading...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="h-4 w-4 mr-2" />
+                              Download All
+                            </>
+                          )}
                         </Button>
                         <Button
                           onClick={() => handleOpenFolder(folder)}
