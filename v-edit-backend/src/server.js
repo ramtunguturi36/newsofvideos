@@ -62,8 +62,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// Explicitly handle preflight for all routes
-app.options("*", cors(corsOptions));
 app.use(express.json());
 
 // Session middleware
