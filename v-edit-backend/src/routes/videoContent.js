@@ -1,19 +1,29 @@
 import express from "express";
 import multer from "multer";
 import mongoose from "mongoose";
+import fs from "fs";
+import os from "os";
+import path from "path";
 import { authMiddleware, roleMiddleware } from "../middleware/auth.js";
 import VideoFolder from "../models/VideoFolder.js";
 import VideoContent from "../models/VideoContent.js";
-import { uploadToR2 } from "../utils/r2.js";
+import { uploadToR2, copyInR2 } from "../utils/r2.js";
 import {
   addVideoWatermark,
   getVideoMetadata,
+  getVideoMetadataFromPath,
 } from "../utils/videoWatermark.js";
 
+// Store uploads on disk (ephemeral) to avoid buffering large files in memory
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, os.tmpdir()),
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+});
+
 const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 1000 * 1000 * 500 },
-}); // 500MB limit
+  storage,
+  limits: { fileSize: 1000 * 1000 * 500 }, // 500MB per file
+});
 
 const router = express.Router();
 
@@ -73,8 +83,8 @@ router.post(
 
       console.log("🎬 Processing video upload...");
 
-      // Get video metadata
-      const metadata = await getVideoMetadata(videoFile.buffer);
+      // Get video metadata from disk path (no memory buffering)
+      const metadata = await getVideoMetadataFromPath(videoFile.path);
       console.log("📊 Video metadata:", metadata);
 
       // TEMPORARY FIX: Watermarking disabled to prevent Render crashes
@@ -82,23 +92,18 @@ router.post(
       console.log(
         "⚠️  WATERMARKING DISABLED - Using original video as preview",
       );
-      const watermarkedVideo = videoFile.buffer; // No processing, no crash
+      // We'll copy the uploaded object within R2 for preview instead of re-uploading
 
       const videoKey = `video-downloads/${ts}-${videoFile.originalname}`;
       const previewKey = `video-previews/${ts}-preview-${videoFile.originalname}`;
 
+      // Upload original video from disk stream
       const uploadPromises = [
         uploadToR2({
           bucket,
           key: videoKey,
           contentType: videoFile.mimetype,
-          body: videoFile.buffer,
-        }),
-        uploadToR2({
-          bucket,
-          key: previewKey,
-          contentType: videoFile.mimetype,
-          body: watermarkedVideo,
+          body: fs.createReadStream(videoFile.path),
         }),
       ];
 
@@ -110,17 +115,24 @@ router.post(
             bucket,
             key: thumbnailKey,
             contentType: thumbnailFile.mimetype,
-            body: thumbnailFile.buffer,
+            body: fs.createReadStream(thumbnailFile.path),
           }),
         );
       }
 
       const results = await Promise.all(uploadPromises);
       const downloadVideoUrl = results[0];
-      const previewVideoUrl = results[1];
       if (thumbnailFile) {
-        thumbnailUrl = results[2];
+        thumbnailUrl = results[1];
       }
+
+      // Create preview by server-side copy (no extra upload)
+      const previewVideoUrl = await copyInR2({
+        bucket,
+        sourceKey: videoKey,
+        destKey: previewKey,
+        contentType: videoFile.mimetype,
+      });
 
       const videoContent = await VideoContent.create({
         folderId,
@@ -151,6 +163,18 @@ router.post(
         error: err.message,
         details: process.env.NODE_ENV === "development" ? err.stack : undefined,
       });
+    } finally {
+      // Cleanup temp files
+      try {
+        const videoFile = req.files?.video?.[0];
+        const thumbnailFile = req.files?.thumbnail?.[0];
+        if (videoFile?.path) {
+          fs.unlink(videoFile.path, () => {});
+        }
+        if (thumbnailFile?.path) {
+          fs.unlink(thumbnailFile.path, () => {});
+        }
+      } catch {}
     }
   },
 );
@@ -407,7 +431,7 @@ router.put(
         category: category || video.category,
       };
 
-      const videoFile = req.files?.video?.[0];
+  const videoFile = req.files?.video?.[0];
       const thumbnailFile = req.files?.thumbnail?.[0];
 
       if (videoFile || thumbnailFile) {
@@ -417,30 +441,28 @@ router.put(
         if (videoFile) {
           console.log("🎬 Processing video update...");
 
-          const metadata = await getVideoMetadata(videoFile.buffer);
+          const metadata = await getVideoMetadataFromPath(videoFile.path);
           // TEMPORARY FIX: Watermarking disabled to prevent Render crashes
           console.log(
             "⚠️  WATERMARKING DISABLED - Using original video as preview",
           );
-          const watermarkedVideo = videoFile.buffer; // No processing, no crash
+          // We'll copy on R2 for preview
 
           const videoKey = `video-downloads/${ts}-${videoFile.originalname}`;
           const previewKey = `video-previews/${ts}-preview-${videoFile.originalname}`;
 
-          const [downloadUrl, previewUrl] = await Promise.all([
-            uploadToR2({
-              bucket,
-              key: videoKey,
-              contentType: videoFile.mimetype,
-              body: videoFile.buffer,
-            }),
-            uploadToR2({
-              bucket,
-              key: previewKey,
-              contentType: videoFile.mimetype,
-              body: watermarkedVideo,
-            }),
-          ]);
+          const downloadUrl = await uploadToR2({
+            bucket,
+            key: videoKey,
+            contentType: videoFile.mimetype,
+            body: fs.createReadStream(videoFile.path),
+          });
+          const previewUrl = await copyInR2({
+            bucket,
+            sourceKey: videoKey,
+            destKey: previewKey,
+            contentType: videoFile.mimetype,
+          });
 
           updateData.downloadVideoUrl = downloadUrl;
           updateData.previewVideoUrl = previewUrl;
@@ -463,7 +485,7 @@ router.put(
             bucket,
             key: thumbnailKey,
             contentType: thumbnailFile.mimetype,
-            body: thumbnailFile.buffer,
+            body: fs.createReadStream(thumbnailFile.path),
           });
         }
       }
@@ -477,6 +499,18 @@ router.put(
     } catch (err) {
       console.error(err);
       return res.status(500).json({ message: "Server error" });
+    } finally {
+      // Cleanup temp files
+      try {
+        const videoFile = req.files?.video?.[0];
+        const thumbnailFile = req.files?.thumbnail?.[0];
+        if (videoFile?.path) {
+          fs.unlink(videoFile.path, () => {});
+        }
+        if (thumbnailFile?.path) {
+          fs.unlink(thumbnailFile.path, () => {});
+        }
+      } catch {}
     }
   },
 );

@@ -25,39 +25,45 @@ import audioContentRoutes from "./routes/audioContent.js";
 import downloadProxyRoutes from "./routes/downloadProxy.js";
 
 const app = express();
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
 
-      // In development, allow localhost
-      if (
-        process.env.NODE_ENV !== "production" &&
-        origin?.startsWith("http://localhost")
-      ) {
-        return callback(null, true);
-      }
+// Centralized CORS options to reuse for preflight handling
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
 
-      const allowedOrigins = [
-        "http://localhost:5173",
-        "https://newsofvideos.onrender.com",
-        "https://newsofvideos.vercel.app",
-        process.env.FRONTEND_URL,
-      ].filter(Boolean); // Remove any undefined values
+    // In development, allow localhost
+    if (
+      process.env.NODE_ENV !== "production" &&
+      origin?.startsWith("http://localhost")
+    ) {
+      return callback(null, true);
+    }
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+    const allowedOrigins = [
+      "http://localhost:5173",
+      "https://newsofvideos.onrender.com",
+      "https://newsofvideos.vercel.app",
+      process.env.FRONTEND_URL,
+    ].filter(Boolean); // Remove any undefined values
 
-      console.log("CORS blocked origin:", origin);
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  }),
-);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    console.log("CORS blocked origin:", origin);
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  optionsSuccessStatus: 204,
+  maxAge: 86400, // cache preflight for 24h
+};
+
+app.use(cors(corsOptions));
+// Explicitly handle preflight for all routes
+app.options("*", cors(corsOptions));
 app.use(express.json());
 
 // Session middleware

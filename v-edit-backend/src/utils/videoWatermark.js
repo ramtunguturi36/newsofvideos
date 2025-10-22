@@ -187,3 +187,39 @@ export async function getVideoMetadata(videoBuffer) {
     }
   }
 }
+
+/**
+ * Extract video metadata from a file path (avoids buffering entire file in memory)
+ * @param {string} filePath - Absolute path to the video file
+ * @returns {Promise<Object>} - Video metadata
+ */
+export async function getVideoMetadataFromPath(filePath) {
+  try {
+    const ffprobeCommand = `ffprobe -v quiet -print_format json -show_format -show_streams "${filePath}"`;
+    const { stdout } = await execAsync(ffprobeCommand);
+    const metadata = JSON.parse(stdout);
+    const videoStream = metadata.streams.find((s) => s.codec_type === "video");
+
+    // Get file size via fs.stat
+    const stat = await fs.stat(filePath);
+
+    return {
+      duration: parseFloat(metadata.format.duration) || 0,
+      width: videoStream?.width || 0,
+      height: videoStream?.height || 0,
+      fps: eval(videoStream?.r_frame_rate || "0/1"),
+      format: metadata.format.format_name || "unknown",
+      fileSize: stat.size || 0,
+    };
+  } catch (error) {
+    console.error("Error getting video metadata from path:", error);
+    return {
+      duration: 0,
+      width: 0,
+      height: 0,
+      fps: 0,
+      format: "unknown",
+      fileSize: 0,
+    };
+  }
+}
