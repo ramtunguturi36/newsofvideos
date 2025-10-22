@@ -21,6 +21,7 @@ import type { Folder, TemplateItem } from "@/lib/backend";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export default function VideoTemplatesBrowse() {
   const navigate = useNavigate();
@@ -468,6 +469,9 @@ export default function VideoTemplatesBrowse() {
             )}
           </div>
         )}
+
+        {/* Footer */}
+        <Footer />
       </div>
     </div>
   );

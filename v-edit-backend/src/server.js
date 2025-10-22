@@ -50,32 +50,16 @@ app.use(
         return callback(null, true);
       }
 
-<<<<<<< HEAD
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    console.log("CORS blocked origin:", origin);
-    return callback(new Error("Not allowed by CORS"));
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  optionsSuccessStatus: 204,
-  maxAge: 86400, // cache preflight for 24h
-};
-
-app.use(cors(corsOptions));
-=======
       console.log("CORS blocked origin:", origin);
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    optionsSuccessStatus: 204,
+    maxAge: 86400, // cache preflight for 24h
   }),
 );
->>>>>>> parent of 47e98a4 (render fix servive stop for videos 61)
 app.use(express.json());
 
 // Session middleware

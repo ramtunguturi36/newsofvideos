@@ -11,7 +11,9 @@ import {
   Package,
   ChevronRight,
   Home,
+  Filter,
   Gift,
+  Video,
   Film,
   Loader2,
 } from "lucide-react";
@@ -20,6 +22,7 @@ import type { VideoFolder, VideoContent } from "@/lib/types";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export default function VideoContentBrowse() {
   const navigate = useNavigate();
@@ -469,6 +472,9 @@ export default function VideoContentBrowse() {
             )}
           </div>
         )}
+
+        {/* Footer */}
+        <Footer />
       </div>
     </div>
   );

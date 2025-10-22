@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Video, Image, Film, Music, Package, ShoppingCart } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export default function UserDashboard() {
   const navigate = useNavigate();
@@ -172,6 +173,9 @@ export default function UserDashboard() {
           </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

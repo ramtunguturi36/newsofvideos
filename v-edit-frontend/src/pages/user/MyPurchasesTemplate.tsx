@@ -19,6 +19,7 @@ import {
 import { backend } from "@/lib/backend";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 interface MyPurchasesTemplateProps {
   title: string;
@@ -502,6 +503,9 @@ export default function MyPurchasesTemplate({
           </div>
         )}
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

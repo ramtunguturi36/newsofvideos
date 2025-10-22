@@ -11,6 +11,7 @@ import {
   Package,
   ChevronRight,
   Home,
+  Filter,
   Gift,
   Image,
   Loader2,
@@ -20,6 +21,7 @@ import type { PictureFolder, PictureTemplate } from "@/lib/types";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export default function PicturesBrowse() {
   const navigate = useNavigate();
@@ -466,6 +468,9 @@ export default function PicturesBrowse() {
             )}
           </div>
         )}
+
+        {/* Footer */}
+        <Footer />
       </div>
     </div>
   );

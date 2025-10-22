@@ -20,6 +20,7 @@ import type { AudioFolder, AudioContent } from "@/lib/types";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export default function AudioBrowse() {
   const navigate = useNavigate();
@@ -459,6 +460,9 @@ export default function AudioBrowse() {
             )}
           </div>
         )}
+
+        {/* Footer */}
+        <Footer />
       </div>
     </div>
   );
