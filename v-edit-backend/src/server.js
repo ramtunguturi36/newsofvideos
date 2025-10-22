@@ -25,28 +25,32 @@ import audioContentRoutes from "./routes/audioContent.js";
 import downloadProxyRoutes from "./routes/downloadProxy.js";
 
 const app = express();
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
 
-// Centralized CORS options to reuse for preflight handling
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+      // In development, allow localhost
+      if (
+        process.env.NODE_ENV !== "production" &&
+        origin?.startsWith("http://localhost")
+      ) {
+        return callback(null, true);
+      }
 
-    // In development, allow localhost
-    if (
-      process.env.NODE_ENV !== "production" &&
-      origin?.startsWith("http://localhost")
-    ) {
-      return callback(null, true);
-    }
+      const allowedOrigins = [
+        "http://localhost:5173",
+        "https://newsofvideos.onrender.com",
+        "https://newsofvideos.vercel.app",
+        process.env.FRONTEND_URL,
+      ].filter(Boolean); // Remove any undefined values
 
-    const allowedOrigins = [
-      "http://localhost:5173",
-      "https://newsofvideos.onrender.com",
-      "https://newsofvideos.vercel.app",
-      process.env.FRONTEND_URL,
-    ].filter(Boolean); // Remove any undefined values
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
 
+<<<<<<< HEAD
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
@@ -62,6 +66,16 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+=======
+      console.log("CORS blocked origin:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  }),
+);
+>>>>>>> parent of 47e98a4 (render fix servive stop for videos 61)
 app.use(express.json());
 
 // Session middleware
