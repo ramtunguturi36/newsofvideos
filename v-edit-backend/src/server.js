@@ -23,6 +23,7 @@ import pictureContentRoutes from "./routes/pictureContent.js";
 import videoContentRoutes from "./routes/videoContent.js";
 import audioContentRoutes from "./routes/audioContent.js";
 import downloadProxyRoutes from "./routes/downloadProxy.js";
+import passwordResetRoutes from "./routes/passwordReset.js";
 
 const app = express();
 app.use(
@@ -89,6 +90,7 @@ app.use("/api/picture-content", pictureContentRoutes);
 app.use("/api/video-content", videoContentRoutes);
 app.use("/api/audio-content", audioContentRoutes);
 app.use("/api", downloadProxyRoutes);
+app.use("/api/password", passwordResetRoutes);
 
 app.get("/health", (req, res) => res.json({ ok: true }));
 

@@ -1,23 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   // Toast notifications are now available via the imported toast function
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/user/dashboard';
+  const from =
+    (location.state as { from?: { pathname: string } })?.from?.pathname ||
+    "/user/dashboard";
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -28,26 +37,27 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
-      toast.error('Please enter both email and password');
+      toast.error("Please enter both email and password");
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       const user = await login(email, password);
       if (user) {
-        toast.success(`Welcome back, ${user.name || 'User'}!`);
+        toast.success(`Welcome back, ${user.name || "User"}!`);
         // The navigation will be handled by the isAuthenticated useEffect
       }
     } catch (error) {
-      console.error('Login error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Invalid email or password';
+      console.error("Login error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Invalid email or password";
       toast.error(`Login Failed: ${errorMessage}`);
       // Clear password field on error
-      setPassword('');
+      setPassword("");
     } finally {
       setIsSubmitting(false);
     }
@@ -73,8 +83,18 @@ export default function Login() {
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-4">
               <div className="p-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500">
-                <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                <svg
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
                 </svg>
               </div>
             </div>
@@ -88,7 +108,9 @@ export default function Login() {
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-white font-medium">Email Address</Label>
+                <Label htmlFor="email" className="text-white font-medium">
+                  Email Address
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -102,19 +124,15 @@ export default function Login() {
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-white font-medium">Password</Label>
-                  <button 
-                    type="button"
-                    className="text-sm font-medium text-blue-300 hover:text-blue-200 transition-colors"
-                    onClick={() => {
-                      toast({
-                        title: 'Forgot Password',
-                        description: 'Please contact support to reset your password.',
-                      });
-                    }}
+                  <Label htmlFor="password" className="text-white font-medium">
+                    Password
+                  </Label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-sm text-blue-300 hover:text-blue-200 transition-colors"
                   >
                     Forgot password?
-                  </button>
+                  </Link>
                 </div>
                 <Input
                   id="password"
@@ -129,9 +147,9 @@ export default function Login() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
-              <Button 
-                type="submit" 
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 transition-all duration-300 transform hover:scale-105" 
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 transition-all duration-300 transform hover:scale-105"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -140,24 +158,26 @@ export default function Login() {
                     Signing in...
                   </div>
                 ) : (
-                  'Sign In'
+                  "Sign In"
                 )}
               </Button>
               <div className="text-center">
-                <span className="text-gray-300 text-sm">Don't have an account? </span>
-                <button 
+                <span className="text-gray-300 text-sm">
+                  Don't have an account?{" "}
+                </span>
+                <button
                   type="button"
                   className="font-medium text-blue-300 hover:text-blue-200 transition-colors"
-                  onClick={() => navigate('/register')}
+                  onClick={() => navigate("/register")}
                 >
                   Create one
                 </button>
               </div>
               <div className="text-center">
-                <button 
+                <button
                   type="button"
                   className="text-sm text-gray-300 hover:text-white transition-colors"
-                  onClick={() => navigate('/login/admin')}
+                  onClick={() => navigate("/login/admin")}
                 >
                   Admin Login
                 </button>
