@@ -22,6 +22,7 @@ import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import MarketplaceHeader from "@/components/MarketplaceHeader";
 
 export default function PicturesBrowse() {
   const navigate = useNavigate();
@@ -116,252 +117,301 @@ export default function PicturesBrowse() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      {/* Fixed Navbar */}
       <Navbar />
 
-      {/* Sub Header */}
-      <div className="sticky top-16 z-40 bg-white/95 backdrop-blur-lg border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          {/* Top Row */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-4">
-              <Button
-                onClick={() => navigate("/user/dashboard")}
-                variant="outline"
-                className="rounded-full"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-              <div className="hidden sm:flex items-center space-x-2 text-sm text-slate-600">
-                <button
-                  onClick={() => navigate("/user/dashboard")}
-                  className="hover:text-purple-600 transition-colors"
-                >
-                  <Home className="h-4 w-4 flex-shrink-0" />
-                </button>
-                <ChevronRight className="h-4 w-4 flex-shrink-0 text-slate-400" />
-                <button
-                  onClick={() => navigate("/picture-templates")}
-                  className="font-medium text-slate-900 hover:text-purple-600 transition-colors"
-                >
-                  Pictures
-                </button>
-                {path.length > 0 && (
-                  <>
-                    {path.map((folder, index) => (
-                      <React.Fragment key={folder._id}>
-                        <ChevronRight className="h-4 w-4 flex-shrink-0 text-slate-400" />
-                        {index === path.length - 1 ? (
-                          <span className="font-medium text-slate-900">
-                            {folder.name}
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => navigateToFolder(folder._id)}
-                            className="hover:text-purple-600 transition-colors font-medium"
-                          >
-                            {folder.name}
-                          </button>
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </>
-                )}
+      <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Marketplace Header */}
+          <MarketplaceHeader
+            icon={Image}
+            title={
+              path.length > 0 ? path[path.length - 1].name : "Picture Templates"
+            }
+            subtitle="Browse picture templates and graphics. Buy complete bundles or individual items."
+            gradient="from-purple-500 to-pink-500"
+            breadcrumbs={
+              path.length > 0
+                ? [
+                    { label: "Pictures", href: "/picture-templates" },
+                    ...path.map((folder, index) => ({
+                      label: folder.name,
+                      href:
+                        index < path.length - 1
+                          ? `/picture-templates?folderId=${folder._id}`
+                          : undefined,
+                    })),
+                  ]
+                : [{ label: "Pictures" }]
+            }
+          />
+
+          {/* Filters and Search */}
+          <div className="mb-6">
+            <div className="bg-white rounded-2xl p-4 shadow-lg border-2 border-slate-100">
+              <div className="flex flex-col md:flex-row gap-4">
+                {/* Search */}
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    type="text"
+                    placeholder="Search templates and folders..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 bg-slate-50 border-slate-200 rounded-xl"
+                  />
+                </div>
+
+                {/* Filter Buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setFilterType("all")}
+                    variant={filterType === "all" ? "default" : "outline"}
+                    className={`rounded-xl ${
+                      filterType === "all"
+                        ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                        : ""
+                    }`}
+                  >
+                    All
+                  </Button>
+                  <Button
+                    onClick={() => setFilterType("bundles")}
+                    variant={filterType === "bundles" ? "default" : "outline"}
+                    className={`rounded-xl ${
+                      filterType === "bundles"
+                        ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                        : ""
+                    }`}
+                  >
+                    <Package className="h-4 w-4 mr-2" />
+                    Bundles
+                  </Button>
+                  <Button
+                    onClick={() => setFilterType("free")}
+                    variant={filterType === "free" ? "default" : "outline"}
+                    className={`rounded-xl ${
+                      filterType === "free"
+                        ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                        : ""
+                    }`}
+                  >
+                    <Gift className="h-4 w-4 mr-2" />
+                    Free
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Search and Filter Row */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                type="text"
-                placeholder="Search pictures and folders..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 rounded-full border-slate-300"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant={filterType === "all" ? "default" : "outline"}
-                onClick={() => setFilterType("all")}
-                className="rounded-full"
-              >
-                All
-              </Button>
-              <Button
-                variant={filterType === "bundles" ? "default" : "outline"}
-                onClick={() => setFilterType("bundles")}
-                className="rounded-full"
-              >
-                <Gift className="h-4 w-4 mr-2" />
-                Bundles
-              </Button>
-              <Button
-                variant={filterType === "free" ? "default" : "outline"}
-                onClick={() => setFilterType("free")}
-                className="rounded-full"
-              >
-                Free Browse
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+          {/* Folders Grid - Only show when at root or has subfolders */}
+          {filteredFolders.length > 0 &&
+            (folderId === undefined || filteredFolders.length > 0) && (
+              <div className="mb-12">
+                <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+                  <FolderOpen className="h-6 w-6 mr-2 text-purple-600" />
+                  {filterType === "bundles"
+                    ? "Bundle Deals"
+                    : filterType === "free"
+                      ? "Browse Categories"
+                      : "All Categories"}
+                  <span className="ml-3 text-sm font-normal text-slate-500">
+                    ({filteredFolders.length})
+                  </span>
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {filteredFolders.map((folder) => (
+                    <div
+                      key={folder._id}
+                      className={`group rounded-2xl overflow-hidden border-2 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 ${
+                        folder.isPurchasable
+                          ? "border-pink-300 bg-gradient-to-br from-pink-50 to-purple-50"
+                          : "border-slate-200 bg-white"
+                      }`}
+                    >
+                      {/* Folder Badge */}
+                      {folder.isPurchasable && (
+                        <div className="bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs font-bold px-3 py-1 flex items-center justify-center">
+                          <Gift className="h-3 w-3 mr-1" />
+                          BUNDLE DEAL - SAVE BIG!
+                        </div>
+                      )}
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
-        {/* Page Title */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">
-            {path.length > 0
-              ? path[path.length - 1].name
-              : "Picture Templates Marketplace"}
-          </h1>
-          <p className="text-lg text-slate-600">
-            Browse image templates and graphics. Buy complete bundles or
-            individual items.
-          </p>
-        </div>
+                      {/* Folder Image */}
+                      <div
+                        className="relative aspect-video overflow-hidden bg-slate-100 cursor-pointer"
+                        onClick={() =>
+                          !folder.isPurchasable && navigateToFolder(folder._id)
+                        }
+                      >
+                        {folder.coverPhotoUrl ? (
+                          <img
+                            src={folder.coverPhotoUrl}
+                            alt={folder.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div
+                            className={`w-full h-full flex items-center justify-center ${
+                              folder.isPurchasable
+                                ? "bg-gradient-to-r from-pink-100 to-purple-100"
+                                : "bg-gradient-to-r from-purple-100 to-pink-100"
+                            }`}
+                          >
+                            <FolderOpen
+                              className={`h-16 w-16 ${
+                                folder.isPurchasable
+                                  ? "text-pink-600"
+                                  : "text-purple-600"
+                              }`}
+                            />
+                          </div>
+                        )}
+                      </div>
 
-        {/* Folders Grid - Only show when at root or has subfolders */}
-        {filteredFolders.length > 0 &&
-          (folderId === undefined || filteredFolders.length > 0) && (
-            <div className="mb-12">
+                      {/* Folder Content */}
+                      <div className="p-5">
+                        <h3 className="text-lg font-bold text-slate-900 mb-2 line-clamp-1">
+                          {folder.name}
+                        </h3>
+
+                        {folder.isPurchasable ? (
+                          <>
+                            {/* Purchasable Folder */}
+                            <div className="mb-4">
+                              <div className="flex items-baseline space-x-2 mb-1">
+                                <span className="text-2xl font-bold text-slate-900">
+                                  ₹{folder.discountPrice || folder.basePrice}
+                                </span>
+                                {folder.discountPrice && (
+                                  <span className="text-sm text-slate-500 line-through">
+                                    ₹{folder.basePrice}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-slate-600">
+                                💰 Bundle price • Or buy items individually
+                              </p>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Button
+                                onClick={() =>
+                                  handleAddToCart(folder, "picture-folder")
+                                }
+                                disabled={isInCart(folder._id)}
+                                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white rounded-full font-semibold shadow-lg"
+                              >
+                                {isInCart(folder._id) ? (
+                                  <>
+                                    <ShoppingCart className="h-4 w-4 mr-2" />
+                                    In Cart
+                                  </>
+                                ) : (
+                                  <>
+                                    <ShoppingCart className="h-4 w-4 mr-2" />
+                                    Buy Bundle
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                onClick={() => navigateToFolder(folder._id)}
+                                variant="outline"
+                                className="w-full rounded-full border-2 border-slate-300 hover:border-slate-400"
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                Browse Items
+                              </Button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            {/* Free Browse Folder */}
+                            <p className="text-sm text-slate-600 mb-4">
+                              Browse free • Buy items individually
+                            </p>
+                            <Button
+                              onClick={() => navigateToFolder(folder._id)}
+                              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full font-semibold"
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Items
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          {/* Templates Grid - Only show when inside a folder */}
+          {filteredTemplates.length > 0 && folderId && (
+            <div>
               <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
-                <FolderOpen className="h-6 w-6 mr-2 text-purple-600" />
-                {filterType === "bundles"
-                  ? "Bundle Deals"
-                  : filterType === "free"
-                    ? "Browse Categories"
-                    : "All Categories"}
+                <Image className="h-6 w-6 mr-2 text-purple-600" />
+                Picture Templates
                 <span className="ml-3 text-sm font-normal text-slate-500">
-                  ({filteredFolders.length})
+                  ({filteredTemplates.length})
                 </span>
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredFolders.map((folder) => (
+                {filteredTemplates.map((template) => (
                   <div
-                    key={folder._id}
-                    className={`group rounded-2xl overflow-hidden border-2 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 ${
-                      folder.isPurchasable
-                        ? "border-pink-300 bg-gradient-to-br from-pink-50 to-purple-50"
-                        : "border-slate-200 bg-white"
-                    }`}
+                    key={template._id}
+                    className="group bg-white rounded-2xl overflow-hidden border border-slate-200 hover:border-purple-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                   >
-                    {/* Folder Badge */}
-                    {folder.isPurchasable && (
-                      <div className="bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs font-bold px-3 py-1 flex items-center justify-center">
-                        <Gift className="h-3 w-3 mr-1" />
-                        BUNDLE DEAL - SAVE BIG!
-                      </div>
-                    )}
-
-                    {/* Folder Image */}
-                    <div
-                      className="relative aspect-video overflow-hidden bg-slate-100 cursor-pointer"
-                      onClick={() =>
-                        !folder.isPurchasable && navigateToFolder(folder._id)
-                      }
-                    >
-                      {folder.coverPhotoUrl ? (
+                    {/* Image Preview */}
+                    <div className="relative aspect-square bg-slate-100 overflow-hidden">
+                      {template.previewImageUrl ? (
                         <img
-                          src={folder.coverPhotoUrl}
-                          alt={folder.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          src={template.previewImageUrl}
+                          alt={template.title}
                         />
                       ) : (
-                        <div
-                          className={`w-full h-full flex items-center justify-center ${
-                            folder.isPurchasable
-                              ? "bg-gradient-to-r from-pink-100 to-purple-100"
-                              : "bg-gradient-to-r from-purple-100 to-pink-100"
-                          }`}
-                        >
-                          <FolderOpen
-                            className={`h-16 w-16 ${
-                              folder.isPurchasable
-                                ? "text-pink-600"
-                                : "text-purple-600"
-                            }`}
-                          />
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
+                          <Image className="h-12 w-12 text-slate-400" />
                         </div>
                       )}
                     </div>
 
-                    {/* Folder Content */}
+                    {/* Template Content */}
                     <div className="p-5">
-                      <h3 className="text-lg font-bold text-slate-900 mb-2 line-clamp-1">
-                        {folder.name}
+                      <h3 className="text-lg font-bold text-slate-900 mb-3 line-clamp-2">
+                        {template.title}
                       </h3>
 
-                      {folder.isPurchasable ? (
-                        <>
-                          {/* Purchasable Folder */}
-                          <div className="mb-4">
-                            <div className="flex items-baseline space-x-2 mb-1">
-                              <span className="text-2xl font-bold text-slate-900">
-                                ₹{folder.discountPrice || folder.basePrice}
-                              </span>
-                              {folder.discountPrice && (
-                                <span className="text-sm text-slate-500 line-through">
-                                  ₹{folder.basePrice}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-slate-600">
-                              💰 Bundle price • Or buy items individually
-                            </p>
-                          </div>
+                      <div className="flex items-baseline space-x-2 mb-4">
+                        <span className="text-2xl font-bold text-slate-900">
+                          ₹{template.discountPrice || template.basePrice}
+                        </span>
+                        {template.discountPrice && (
+                          <span className="text-sm text-slate-500 line-through">
+                            ₹{template.basePrice}
+                          </span>
+                        )}
+                      </div>
 
-                          <div className="space-y-2">
-                            <Button
-                              onClick={() =>
-                                handleAddToCart(folder, "picture-folder")
-                              }
-                              disabled={isInCart(folder._id)}
-                              className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white rounded-full font-semibold shadow-lg"
-                            >
-                              {isInCart(folder._id) ? (
-                                <>
-                                  <ShoppingCart className="h-4 w-4 mr-2" />
-                                  In Cart
-                                </>
-                              ) : (
-                                <>
-                                  <ShoppingCart className="h-4 w-4 mr-2" />
-                                  Buy Bundle
-                                </>
-                              )}
-                            </Button>
-                            <Button
-                              onClick={() => navigateToFolder(folder._id)}
-                              variant="outline"
-                              className="w-full rounded-full border-2 border-slate-300 hover:border-slate-400"
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              Browse Items
-                            </Button>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          {/* Free Browse Folder */}
-                          <p className="text-sm text-slate-600 mb-4">
-                            Browse free • Buy items individually
-                          </p>
-                          <Button
-                            onClick={() => navigateToFolder(folder._id)}
-                            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full font-semibold"
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Items
-                          </Button>
-                        </>
-                      )}
+                      <Button
+                        onClick={() =>
+                          handleAddToCart(template, "picture-template")
+                        }
+                        disabled={isInCart(template._id)}
+                        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full font-semibold"
+                      >
+                        {isInCart(template._id) ? (
+                          <>
+                            <ShoppingCart className="h-4 w-4 mr-2" />
+                            In Cart
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCart className="h-4 w-4 mr-2" />
+                            Add to Cart
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -369,109 +419,35 @@ export default function PicturesBrowse() {
             </div>
           )}
 
-        {/* Templates Grid - Only show when inside a folder */}
-        {filteredTemplates.length > 0 && folderId && (
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
-              <Image className="h-6 w-6 mr-2 text-purple-600" />
-              Picture Templates
-              <span className="ml-3 text-sm font-normal text-slate-500">
-                ({filteredTemplates.length})
-              </span>
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredTemplates.map((template) => (
-                <div
-                  key={template._id}
-                  className="group bg-white rounded-2xl overflow-hidden border border-slate-200 hover:border-purple-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+          {/* Empty State */}
+          {filteredFolders.length === 0 && filteredTemplates.length === 0 && (
+            <div className="text-center py-16">
+              <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-6">
+                <Package className="h-10 w-10 text-slate-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">
+                No content found
+              </h3>
+              <p className="text-slate-600 mb-6">
+                {searchTerm
+                  ? "Try adjusting your search or filter."
+                  : "This category is empty."}
+              </p>
+              {searchTerm && (
+                <Button
+                  onClick={() => setSearchTerm("")}
+                  variant="outline"
+                  className="rounded-full"
                 >
-                  {/* Image Preview */}
-                  <div className="relative aspect-square bg-slate-100 overflow-hidden">
-                    {template.previewImageUrl ? (
-                      <img
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        src={template.previewImageUrl}
-                        alt={template.title}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
-                        <Image className="h-12 w-12 text-slate-400" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Template Content */}
-                  <div className="p-5">
-                    <h3 className="text-lg font-bold text-slate-900 mb-3 line-clamp-2">
-                      {template.title}
-                    </h3>
-
-                    <div className="flex items-baseline space-x-2 mb-4">
-                      <span className="text-2xl font-bold text-slate-900">
-                        ₹{template.discountPrice || template.basePrice}
-                      </span>
-                      {template.discountPrice && (
-                        <span className="text-sm text-slate-500 line-through">
-                          ₹{template.basePrice}
-                        </span>
-                      )}
-                    </div>
-
-                    <Button
-                      onClick={() =>
-                        handleAddToCart(template, "picture-template")
-                      }
-                      disabled={isInCart(template._id)}
-                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full font-semibold"
-                    >
-                      {isInCart(template._id) ? (
-                        <>
-                          <ShoppingCart className="h-4 w-4 mr-2" />
-                          In Cart
-                        </>
-                      ) : (
-                        <>
-                          <ShoppingCart className="h-4 w-4 mr-2" />
-                          Add to Cart
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                  Clear Search
+                </Button>
+              )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      </main>
 
-        {/* Empty State */}
-        {filteredFolders.length === 0 && filteredTemplates.length === 0 && (
-          <div className="text-center py-16">
-            <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 mb-6">
-              <Package className="h-10 w-10 text-slate-400" />
-            </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">
-              No content found
-            </h3>
-            <p className="text-slate-600 mb-6">
-              {searchTerm
-                ? "Try adjusting your search or filter."
-                : "This category is empty."}
-            </p>
-            {searchTerm && (
-              <Button
-                onClick={() => setSearchTerm("")}
-                variant="outline"
-                className="rounded-full"
-              >
-                Clear Search
-              </Button>
-            )}
-          </div>
-        )}
-
-        {/* Footer */}
-        <Footer />
-      </div>
+      <Footer />
     </div>
   );
 }

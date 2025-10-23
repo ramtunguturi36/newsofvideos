@@ -19,6 +19,7 @@ import UserLayout from "./pages/user/UserLayout";
 import UserDashboard from "./pages/user/UserDashboard";
 import Orders from "./pages/user/Orders";
 import Settings from "./pages/user/Settings";
+import MyPurchases from "./pages/user/MyPurchases";
 import PurchasedTemplates from "./pages/user/PurchasedTemplates";
 import PurchasedFolders from "./pages/user/PurchasedFolders";
 import MyPictureTemplates from "./pages/user/MyPictureTemplates";
@@ -119,6 +120,7 @@ function App() {
               <Route path="dashboard" element={<UserDashboard />} />
               <Route path="explorer" element={<div>Template Explorer</div>} />
               <Route path="orders" element={<Orders />} />
+              <Route path="my-purchases" element={<MyPurchases />} />
               <Route path="purchased" element={<PurchasedTemplates />} />
               <Route path="folders" element={<PurchasedFolders />} />
               <Route
