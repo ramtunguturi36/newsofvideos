@@ -91,85 +91,82 @@ export default function UserDashboard() {
           </div>
 
           {/* Category Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {categories.map((category) => {
               const IconComponent = category.icon;
               return (
                 <div
                   key={category.id}
-                  className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-slate-200 hover:border-slate-300"
+                  className="group relative bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden border-2 border-transparent hover:border-slate-300 transform hover:-translate-y-2"
                 >
-                  {/* Card Header */}
+                  {/* Gradient Background Overlay */}
                   <div
-                    className={`bg-gradient-to-r ${category.bgLight} p-6 border-b border-slate-200`}
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div
-                        className={`h-16 w-16 rounded-2xl bg-gradient-to-r ${category.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}
-                      >
-                        <IconComponent className="h-8 w-8 text-white" />
+                    className={`absolute inset-0 bg-gradient-to-br ${category.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}
+                  ></div>
+
+                  {/* Card Content */}
+                  <div className="relative z-10 p-8">
+                    {/* Icon and Title */}
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-center space-x-4">
+                        <div
+                          className={`h-20 w-20 rounded-3xl bg-gradient-to-br ${category.gradient} flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}
+                        >
+                          <IconComponent className="h-10 w-10 text-white" />
+                        </div>
+                        <div>
+                          <h3
+                            className="text-3xl font-bold text-slate-900 mb-1 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text transition-all duration-300"
+                            style={{
+                              backgroundImage: `linear-gradient(to right, var(--tw-gradient-stops))`,
+                            }}
+                          >
+                            {category.title}
+                          </h3>
+                          <p className="text-base text-slate-600 font-medium">
+                            {category.subtitle}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="text-2xl font-bold text-slate-900">
-                          {category.title}
-                        </h3>
-                        <p className="text-sm text-slate-600">
-                          {category.subtitle}
-                        </p>
-                      </div>
+                    </div>
+
+                    {/* Decorative Line */}
+                    <div
+                      className={`h-1 w-24 bg-gradient-to-r ${category.gradient} rounded-full mb-6 group-hover:w-full transition-all duration-500`}
+                    ></div>
+
+                    {/* Action Buttons */}
+                    <div className="space-y-3">
+                      {/* Browse Button */}
+                      <Link to={category.browseLink} className="block">
+                        <Button
+                          className={`w-full bg-gradient-to-r ${category.gradient} hover:shadow-2xl text-white rounded-2xl py-7 text-lg font-bold transition-all duration-300 transform group-hover:scale-[1.03]`}
+                        >
+                          <Package className="h-6 w-6 mr-3" />
+                          Browse Marketplace
+                        </Button>
+                      </Link>
+
+                      {/* My Purchases Button */}
+                      <Link to={category.purchasesLink} className="block">
+                        <Button
+                          variant="outline"
+                          className="w-full border-2 border-slate-300 hover:border-slate-400 text-slate-700 hover:bg-slate-50 rounded-2xl py-7 text-lg font-bold transition-all duration-300 backdrop-blur-sm"
+                        >
+                          <ShoppingCart className="h-6 w-6 mr-3" />
+                          My Purchases
+                        </Button>
+                      </Link>
                     </div>
                   </div>
 
-                  {/* Card Actions */}
-                  <div className="p-6 space-y-3">
-                    {/* Browse Button */}
-                    <Link to={category.browseLink} className="block">
-                      <Button
-                        className={`w-full bg-gradient-to-r ${category.gradient} hover:opacity-90 text-white rounded-full py-6 text-base font-semibold shadow-md hover:shadow-lg transition-all duration-300 group-hover:scale-[1.02]`}
-                      >
-                        <Package className="h-5 w-5 mr-2" />
-                        Browse Marketplace
-                      </Button>
-                    </Link>
-
-                    {/* My Purchases Button */}
-                    <Link to={category.purchasesLink} className="block">
-                      <Button
-                        variant="outline"
-                        className="w-full border-2 border-slate-300 hover:border-slate-400 text-slate-700 hover:bg-slate-50 rounded-full py-6 text-base font-semibold transition-all duration-300"
-                      >
-                        <ShoppingCart className="h-5 w-5 mr-2" />
-                        My Purchases
-                      </Button>
-                    </Link>
-                  </div>
+                  {/* Decorative Corner Element */}
+                  <div
+                    className={`absolute -bottom-16 -right-16 w-32 h-32 bg-gradient-to-br ${category.gradient} opacity-10 rounded-full group-hover:scale-150 transition-transform duration-700`}
+                  ></div>
                 </div>
               );
             })}
-          </div>
-
-          {/* Quick Stats Section */}
-          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-2xl p-6 shadow-md border border-slate-200 text-center hover:shadow-lg transition-shadow">
-              <div className="text-3xl font-bold text-purple-600 mb-1">0</div>
-              <div className="text-sm text-slate-600 font-medium">
-                Video Templates
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl p-6 shadow-md border border-slate-200 text-center hover:shadow-lg transition-shadow">
-              <div className="text-3xl font-bold text-pink-600 mb-1">0</div>
-              <div className="text-sm text-slate-600 font-medium">Pictures</div>
-            </div>
-            <div className="bg-white rounded-2xl p-6 shadow-md border border-slate-200 text-center hover:shadow-lg transition-shadow">
-              <div className="text-3xl font-bold text-teal-600 mb-1">0</div>
-              <div className="text-sm text-slate-600 font-medium">
-                Video Content
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl p-6 shadow-md border border-slate-200 text-center hover:shadow-lg transition-shadow">
-              <div className="text-3xl font-bold text-amber-600 mb-1">0</div>
-              <div className="text-sm text-slate-600 font-medium">Audio</div>
-            </div>
           </div>
         </div>
       </main>

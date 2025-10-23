@@ -46,11 +46,9 @@ export default function Login() {
     setIsSubmitting(true);
 
     try {
-      const user = await login(email, password);
-      if (user) {
-        toast.success(`Welcome back, ${user.name || "User"}!`);
-        // The navigation will be handled by the isAuthenticated useEffect
-      }
+      await login(email, password);
+      toast.success(`Welcome back!`);
+      // The navigation will be handled by the isAuthenticated useEffect
     } catch (error) {
       console.error("Login error:", error);
       const errorMessage =
