@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { backend } from "@/lib/backend";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { Download, Eye, Loader2 } from "lucide-react";
 
 type PurchaseItem = {
   id: string;
@@ -77,6 +78,7 @@ export default function PaymentSuccess() {
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [folderItems, setFolderItems] = useState<FolderItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState<string | null>(null);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -383,6 +385,89 @@ export default function PaymentSuccess() {
     }
   };
 
+  const handleDownloadItem = async (item: PurchaseItem) => {
+    if (downloading) return;
+
+    try {
+      setDownloading(item.id);
+      toast.info("Preparing download...");
+
+      let downloadUrl = "";
+      let fileName = item.title || "download";
+
+      // Determine download URL based on item type
+      if (item.type === "template" && item.qrUrl) {
+        downloadUrl = item.qrUrl;
+        fileName = `${fileName.replace(/\s+/g, "-")}-qr.png`;
+      } else if (item.type === "picture-template") {
+        downloadUrl = item.downloadImageUrl || item.previewImageUrl || "";
+        fileName = `${fileName.replace(/\s+/g, "-")}.jpg`;
+      } else if (item.type === "video-content") {
+        downloadUrl = item.downloadVideoUrl || item.previewVideoUrl || "";
+        fileName = `${fileName.replace(/\s+/g, "-")}.mp4`;
+      } else if (item.type === "audio-content") {
+        downloadUrl = item.downloadAudioUrl || item.previewAudioUrl || "";
+        fileName = `${fileName.replace(/\s+/g, "-")}.mp3`;
+      }
+
+      if (!downloadUrl) {
+        toast.error("Download URL not available");
+        setDownloading(null);
+        return;
+      }
+
+      // Use backend proxy
+      const backendUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const proxyUrl = `${backendUrl}/api/download-proxy?url=${encodeURIComponent(downloadUrl)}&filename=${encodeURIComponent(fileName)}`;
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(proxyUrl, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+
+      toast.success("Download completed!");
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Failed to download. Please try again.");
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const handleViewItem = (item: PurchaseItem) => {
+    if (item.type === "template" && item.qrUrl) {
+      window.open(item.qrUrl, "_blank");
+    } else if (
+      item.type === "video-content" &&
+      (item.previewVideoUrl || item.downloadVideoUrl)
+    ) {
+      window.open(item.previewVideoUrl || item.downloadVideoUrl, "_blank");
+    } else if (item.videoUrl) {
+      window.open(item.videoUrl, "_blank");
+    } else {
+      toast.info("No preview available");
+    }
+  };
+
   const handleDownload = async (url: string, filename: string) => {
     try {
       toast.info("Starting download...");
@@ -548,7 +633,7 @@ export default function PaymentSuccess() {
               Go to Dashboard
             </Button>
             <Button
-              onClick={() => navigate("/user/purchased")}
+              onClick={() => navigate("/user/my-purchases")}
               variant="outline"
               className="border-2 border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg px-8 py-3"
             >
@@ -571,9 +656,9 @@ export default function PaymentSuccess() {
             {purchase.items.map((item, idx) => (
               <div
                 key={idx}
-                className="bg-gradient-to-br from-slate-50 to-white p-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all"
+                className="bg-gradient-to-br from-slate-50 to-white p-5 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all"
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-3">
                     <div
                       className={`h-10 w-10 rounded-lg flex items-center justify-center ${
@@ -610,9 +695,17 @@ export default function PaymentSuccess() {
                         {item.title}
                       </h3>
                       <p className="text-sm text-slate-500">
-                        {item.type.includes("folder")
-                          ? "Folder Bundle"
-                          : "Individual Item"}
+                        {item.type === "template"
+                          ? "Video Template with QR"
+                          : item.type === "picture-template"
+                            ? "Picture Template"
+                            : item.type === "video-content"
+                              ? "Video Content"
+                              : item.type === "audio-content"
+                                ? "Audio Content"
+                                : item.type.includes("folder")
+                                  ? "Folder Bundle"
+                                  : "Item"}
                       </p>
                     </div>
                   </div>
@@ -622,6 +715,42 @@ export default function PaymentSuccess() {
                     </div>
                   </div>
                 </div>
+
+                {/* Action buttons for non-folder items */}
+                {!item.type.includes("folder") && (
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => handleDownloadItem(item)}
+                      disabled={downloading === item.id}
+                      className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg text-sm py-2"
+                    >
+                      {downloading === item.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4 mr-1" />
+                          {item.type === "template"
+                            ? "Download QR"
+                            : "Download"}
+                        </>
+                      )}
+                    </Button>
+                    {(item.type === "template" ||
+                      item.type === "video-content" ||
+                      item.videoUrl) && (
+                      <Button
+                        onClick={() => handleViewItem(item)}
+                        variant="outline"
+                        className="rounded-lg px-3"
+                        title={
+                          item.type === "template" ? "View QR Code" : "Preview"
+                        }
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>

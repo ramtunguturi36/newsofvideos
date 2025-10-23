@@ -25,7 +25,12 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 
-type CategoryType = "all" | "video-templates" | "pictures" | "video-content" | "audio";
+type CategoryType =
+  | "all"
+  | "video-templates"
+  | "pictures"
+  | "video-content"
+  | "audio";
 type ViewType = "folders" | "items";
 
 interface PurchaseItem {
@@ -43,6 +48,7 @@ interface PurchaseItem {
   downloadAudioUrl?: string;
   previewAudioUrl?: string;
   videoUrl?: string;
+  thumbnailUrl?: string;
   purchaseDate?: string;
   folderName?: string;
 }
@@ -72,10 +78,10 @@ export default function MyPurchases() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<CategoryType>(
-    (searchParams.get("category") as CategoryType) || "all"
+    (searchParams.get("category") as CategoryType) || "all",
   );
   const [activeView, setActiveView] = useState<ViewType>(
-    (searchParams.get("view") as ViewType) || "items"
+    (searchParams.get("view") as ViewType) || "items",
   );
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -91,7 +97,7 @@ export default function MyPurchases() {
       audio: 0,
     },
   });
-  const [downloading, setDownloading] = useState(false);
+  const [downloading, setDownloading] = useState<string | null>(null);
 
   const categories = [
     {
@@ -156,7 +162,10 @@ export default function MyPurchases() {
 
       purchases.forEach((purchase: any) => {
         const purchaseDate = purchase.createdAt || purchase.date;
-        if (!mostRecentDate || new Date(purchaseDate) > new Date(mostRecentDate)) {
+        if (
+          !mostRecentDate ||
+          new Date(purchaseDate) > new Date(mostRecentDate)
+        ) {
           mostRecentDate = purchaseDate;
         }
 
@@ -167,22 +176,36 @@ export default function MyPurchases() {
           if (item.type === "template") {
             category = "video-templates";
             categoryCount.videoTemplates++;
-          } else if (item.type === "picture" || item.type === "picture-folder") {
+          } else if (
+            item.type === "picture-template" ||
+            item.type === "picture-folder"
+          ) {
             category = "pictures";
             categoryCount.pictures++;
-          } else if (item.type === "video" || item.type === "video-folder") {
+          } else if (
+            item.type === "video-content" ||
+            item.type === "video-folder"
+          ) {
             category = "video-content";
             categoryCount.videoContent++;
-          } else if (item.type === "audio" || item.type === "audio-folder") {
+          } else if (
+            item.type === "audio-content" ||
+            item.type === "audio-folder"
+          ) {
             category = "audio";
             categoryCount.audio++;
           }
 
           // Handle folders
-          if (item.type.includes("folder")) {
+          if (
+            item.type === "folder" ||
+            item.type === "picture-folder" ||
+            item.type === "video-folder" ||
+            item.type === "audio-folder"
+          ) {
             allFolders.push({
               _id: item.folderId || item._id,
-              name: item.folderName || item.title || item.name,
+              name: item.title || item.name,
               itemCount: item.itemCount || 0,
               category,
               purchaseDate,
@@ -190,7 +213,7 @@ export default function MyPurchases() {
           } else {
             // Handle individual items
             allItems.push({
-              _id: item.templateId || item.pictureId || item.videoId || item.audioId || item._id,
+              _id: item.templateId || item._id,
               title: item.title || item.name,
               description: item.description,
               type: item.type,
@@ -204,8 +227,8 @@ export default function MyPurchases() {
               downloadAudioUrl: item.downloadAudioUrl,
               previewAudioUrl: item.previewAudioUrl,
               videoUrl: item.videoUrl,
+              thumbnailUrl: item.thumbnailUrl,
               purchaseDate,
-              folderName: item.folderName,
             });
           }
         });
@@ -231,25 +254,29 @@ export default function MyPurchases() {
     if (downloading) return;
 
     try {
-      setDownloading(true);
+      setDownloading(item._id);
       toast.info("Preparing download...");
 
       let downloadUrl = "";
       let fileName = item.title || "download";
 
-      // Determine the download URL based on item category/type
-      if (item.category === "video-templates" && item.qrUrl) {
+      // Determine the download URL based on item type
+      if (item.type === "template" && item.qrUrl) {
+        // Video templates - download QR code
         downloadUrl = item.qrUrl;
-        fileName = `${fileName}-qr.png`;
-      } else if (item.category === "pictures") {
+        fileName = `${fileName.replace(/\s+/g, "-")}-qr.png`;
+      } else if (item.type === "picture-template") {
+        // Picture templates - download image
         downloadUrl = item.downloadImageUrl || item.previewImageUrl || "";
-        fileName = `${fileName}.jpg`;
-      } else if (item.category === "video-content") {
+        fileName = `${fileName.replace(/\s+/g, "-")}.jpg`;
+      } else if (item.type === "video-content") {
+        // Video content - download video
         downloadUrl = item.downloadVideoUrl || item.previewVideoUrl || "";
-        fileName = `${fileName}.mp4`;
-      } else if (item.category === "audio") {
+        fileName = `${fileName.replace(/\s+/g, "-")}.mp4`;
+      } else if (item.type === "audio-content") {
+        // Audio content - download audio
         downloadUrl = item.downloadAudioUrl || item.previewAudioUrl || "";
-        fileName = `${fileName}.mp3`;
+        fileName = `${fileName.replace(/\s+/g, "-")}.mp3`;
       }
 
       if (!downloadUrl) {
@@ -258,7 +285,8 @@ export default function MyPurchases() {
       }
 
       // Use backend download proxy
-      const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const apiBaseUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:5000";
       const token = localStorage.getItem("token");
       const proxyUrl = `${apiBaseUrl}/api/download-proxy?url=${encodeURIComponent(downloadUrl)}&filename=${encodeURIComponent(fileName)}`;
 
@@ -288,20 +316,44 @@ export default function MyPurchases() {
       console.error("Download error:", error);
       toast.error("Download failed");
     } finally {
-      setDownloading(false);
+      setDownloading(null);
+    }
+  };
+
+  const handleView = (item: PurchaseItem) => {
+    // Handle viewing content based on type
+    if (item.type === "template" && item.qrUrl) {
+      // Open QR code in new tab
+      window.open(item.qrUrl, "_blank");
+    } else if (
+      item.type === "video-content" &&
+      (item.previewVideoUrl || item.downloadVideoUrl)
+    ) {
+      // Open video in new tab
+      window.open(item.previewVideoUrl || item.downloadVideoUrl, "_blank");
+    } else if (item.videoUrl) {
+      // For templates with video URLs
+      window.open(item.videoUrl, "_blank");
+    } else {
+      toast.info("No preview available for this item");
     }
   };
 
   const filteredItems = items.filter((item) => {
-    const matchesCategory = activeCategory === "all" || item.category === activeCategory;
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesCategory =
+      activeCategory === "all" || item.category === activeCategory;
+    const matchesSearch =
+      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
   const filteredFolders = folders.filter((folder) => {
-    const matchesCategory = activeCategory === "all" || folder.category === activeCategory;
-    const matchesSearch = folder.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      activeCategory === "all" || folder.category === activeCategory;
+    const matchesSearch = folder.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
@@ -363,7 +415,9 @@ export default function MyPurchases() {
                     <div className="text-sm text-purple-100">Items</div>
                   </div>
                   <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 text-center min-w-[100px]">
-                    <div className="text-3xl font-bold">{stats.totalFolders}</div>
+                    <div className="text-3xl font-bold">
+                      {stats.totalFolders}
+                    </div>
                     <div className="text-sm text-purple-100">Folders</div>
                   </div>
                 </div>
@@ -372,7 +426,9 @@ export default function MyPurchases() {
               {stats.recentPurchaseDate && (
                 <div className="mt-4 flex items-center space-x-2 text-sm text-purple-100">
                   <Calendar className="h-4 w-4" />
-                  <span>Last purchase: {formatDate(stats.recentPurchaseDate)}</span>
+                  <span>
+                    Last purchase: {formatDate(stats.recentPurchaseDate)}
+                  </span>
                 </div>
               )}
             </div>
@@ -391,10 +447,10 @@ export default function MyPurchases() {
                 cat.id === "video-templates"
                   ? stats.categoryBreakdown.videoTemplates
                   : cat.id === "pictures"
-                  ? stats.categoryBreakdown.pictures
-                  : cat.id === "video-content"
-                  ? stats.categoryBreakdown.videoContent
-                  : stats.categoryBreakdown.audio;
+                    ? stats.categoryBreakdown.pictures
+                    : cat.id === "video-content"
+                      ? stats.categoryBreakdown.videoContent
+                      : stats.categoryBreakdown.audio;
 
               return (
                 <motion.div
@@ -404,10 +460,14 @@ export default function MyPurchases() {
                   transition={{ delay: 0.1 + idx * 0.05 }}
                   className="bg-white rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-slate-100"
                 >
-                  <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${cat.gradient} flex items-center justify-center mb-2`}>
+                  <div
+                    className={`h-10 w-10 rounded-xl bg-gradient-to-br ${cat.gradient} flex items-center justify-center mb-2`}
+                  >
                     <IconComponent className="h-5 w-5 text-white" />
                   </div>
-                  <div className="text-2xl font-bold text-slate-900">{count}</div>
+                  <div className="text-2xl font-bold text-slate-900">
+                    {count}
+                  </div>
                   <div className="text-sm text-slate-600">{cat.label}</div>
                 </motion.div>
               );
@@ -546,15 +606,37 @@ export default function MyPurchases() {
                                 alt={item.title}
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                               />
+                            ) : item.thumbnailUrl ? (
+                              <img
+                                src={item.thumbnailUrl}
+                                alt={item.title}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              />
                             ) : item.previewVideoUrl ? (
                               <video
                                 src={item.previewVideoUrl}
                                 className="w-full h-full object-cover"
                                 muted
                               />
+                            ) : item.qrUrl && item.type === "template" ? (
+                              <img
+                                src={item.qrUrl}
+                                alt={item.title}
+                                className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
+                              />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <Package className="h-16 w-16 text-slate-300" />
+                                {item.type === "template" ? (
+                                  <Video className="h-16 w-16 text-slate-300" />
+                                ) : item.type === "picture-template" ? (
+                                  <Image className="h-16 w-16 text-slate-300" />
+                                ) : item.type === "video-content" ? (
+                                  <Film className="h-16 w-16 text-slate-300" />
+                                ) : item.type === "audio-content" ? (
+                                  <Music className="h-16 w-16 text-slate-300" />
+                                ) : (
+                                  <Package className="h-16 w-16 text-slate-300" />
+                                )}
                               </div>
                             )}
                             <div className="absolute top-2 right-2">
@@ -567,6 +649,17 @@ export default function MyPurchases() {
                             <h3 className="text-lg font-bold text-slate-900 mb-1 line-clamp-1">
                               {item.title}
                             </h3>
+                            <p className="text-xs text-slate-500 mb-2">
+                              {item.type === "template"
+                                ? "Video Template with QR"
+                                : item.type === "picture-template"
+                                  ? "Picture Template"
+                                  : item.type === "video-content"
+                                    ? "Video Content"
+                                    : item.type === "audio-content"
+                                      ? "Audio Content"
+                                      : "Item"}
+                            </p>
                             {item.description && (
                               <p className="text-sm text-slate-600 mb-3 line-clamp-2">
                                 {item.description}
@@ -583,23 +676,32 @@ export default function MyPurchases() {
                             <div className="flex gap-2">
                               <Button
                                 onClick={() => handleDownload(item)}
-                                disabled={downloading}
+                                disabled={downloading === item._id}
                                 className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl"
                               >
-                                {downloading ? (
+                                {downloading === item._id ? (
                                   <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
                                   <>
                                     <Download className="h-4 w-4 mr-2" />
-                                    Download
+                                    {item.type === "template"
+                                      ? "Download QR"
+                                      : "Download"}
                                   </>
                                 )}
                               </Button>
-                              {item.videoUrl && (
+                              {(item.type === "template" ||
+                                item.type === "video-content" ||
+                                item.videoUrl) && (
                                 <Button
-                                  onClick={() => window.open(item.videoUrl, "_blank")}
+                                  onClick={() => handleView(item)}
                                   variant="outline"
                                   className="rounded-xl"
+                                  title={
+                                    item.type === "template"
+                                      ? "View QR Code"
+                                      : "Preview"
+                                  }
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
