@@ -175,7 +175,7 @@ router.get("/audio-hierarchy", async (req, res) => {
     const filter = { parentId: folderId || null };
     const [folders, rawAudio, path] = await Promise.all([
       AudioFolder.find(filter).sort({ createdAt: 1 }),
-      AudioContent.find(folderId ? { folderId } : {}).sort({ createdAt: -1 }),
+      AudioContent.find(folderId ? { folderId } : {}).sort({ createdAt: 1 }),
       buildAudioPath(folderId),
     ]);
 
