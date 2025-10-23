@@ -316,15 +316,16 @@ const PictureTemplatesManager = () => {
 
     for (let i = 0; i < totalFiles; i++) {
       const file = bulkImageFiles[i];
-      const fileName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
+      const itemNumber = i + 1;
+      const itemTitle = bulkTitle ? `${bulkTitle} ${itemNumber}` : file.name.replace(/\.[^/.]+$/, "");
 
       try {
-        setUploadStatus(`Uploading ${i + 1}/${totalFiles}: ${fileName}...`);
+        setUploadStatus(`Uploading ${itemNumber}/${totalFiles}: ${itemTitle}...`);
 
         // For bulk upload, use the same file for both preview and download
         // Backend handles watermarking for preview
         await uploadPictureTemplate({
-          title: bulkTitle || fileName,
+          title: itemTitle,
           basePrice: parseFloat(bulkBasePrice),
           discountPrice: bulkHasDiscount
             ? parseFloat(bulkDiscountPrice)
@@ -338,7 +339,7 @@ const PictureTemplatesManager = () => {
         setUploadProgress(Math.round(((i + 1) / totalFiles) * 100));
       } catch (error) {
         failedCount++;
-        console.error(`Failed to upload ${fileName}:`, error);
+        console.error(`Failed to upload ${itemTitle}:`, error);
       }
     }
 
