@@ -80,8 +80,7 @@ const PictureTemplatesManager = () => {
   const [basePrice, setBasePrice] = useState("");
   const [discountPrice, setDiscountPrice] = useState("");
   const [hasDiscount, setHasDiscount] = useState(false);
-  const [previewImageFile, setPreviewImageFile] = useState<File | null>(null);
-  const [downloadImageFile, setDownloadImageFile] = useState<File | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
   // Bulk upload state
@@ -93,6 +92,7 @@ const PictureTemplatesManager = () => {
   const [bulkImageFiles, setBulkImageFiles] = useState<FileList | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState("");
+  const [isBulkUploading, setIsBulkUploading] = useState(false);
 
   // Edit states
   const [selectedFolder, setSelectedFolder] = useState<PictureFolder | null>(
@@ -212,7 +212,7 @@ const PictureTemplatesManager = () => {
 
   async function handleUploadTemplate(e: React.FormEvent) {
     e.preventDefault();
-    if (!title || !basePrice || !previewImageFile || !downloadImageFile) {
+    if (!title || !basePrice || !imageFile) {
       alert("Please fill all required fields");
       return;
     }
@@ -237,7 +237,7 @@ const PictureTemplatesManager = () => {
       }
     }
 
-    // Validate file types
+    // Validate file type
     const validImageTypes = [
       "image/jpeg",
       "image/png",
@@ -246,28 +246,23 @@ const PictureTemplatesManager = () => {
       "image/webp",
     ];
 
-    if (!validImageTypes.includes(previewImageFile.type)) {
+    if (!validImageTypes.includes(imageFile.type)) {
       alert(
-        "Please upload a valid preview image file (JPEG, PNG, JPG, GIF, or WebP)",
-      );
-      return;
-    }
-
-    if (!validImageTypes.includes(downloadImageFile.type)) {
-      alert(
-        "Please upload a valid download image file (JPEG, PNG, JPG, GIF, or WebP)",
+        "Please upload a valid image file (JPEG, PNG, JPG, GIF, or WebP)",
       );
       return;
     }
 
     setIsUploading(true);
     try {
+      // Use the same file for both preview and download
+      // Backend will watermark the preview and keep the original for download
       await uploadPictureTemplate({
         title,
         basePrice: parseFloat(basePrice),
         discountPrice: hasDiscount ? parseFloat(discountPrice) : undefined,
-        previewImageFile,
-        downloadImageFile,
+        previewImageFile: imageFile,
+        downloadImageFile: imageFile, // Same file - backend handles watermarking
         parentId: currentFolderId,
       });
 
@@ -276,13 +271,14 @@ const PictureTemplatesManager = () => {
       setBasePrice("");
       setDiscountPrice("");
       setHasDiscount(false);
-      setPreviewImageFile(null);
-      setDownloadImageFile(null);
+      setImageFile(null);
 
+      // The useEffect will automatically refresh when dialog closes
       const data = await getPictureHierarchy(currentFolderId);
       setTemplates(data.templates || []);
     } catch (error) {
-      // Handle error silently
+      alert("Failed to upload picture template");
+      console.error("Upload error:", error);
     } finally {
       setIsUploading(false);
     }
@@ -290,6 +286,10 @@ const PictureTemplatesManager = () => {
 
   async function handleBulkUpload(e: React.FormEvent) {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (isBulkUploading) return;
+    
     if (!bulkImageFiles || bulkImageFiles.length === 0) {
       alert("Please select at least one image file");
       return;
@@ -306,6 +306,7 @@ const PictureTemplatesManager = () => {
       return;
     }
 
+    setIsBulkUploading(true);
     setUploadProgress(0);
     setUploadStatus("Starting bulk upload...");
 
@@ -321,7 +322,7 @@ const PictureTemplatesManager = () => {
         setUploadStatus(`Uploading ${i + 1}/${totalFiles}: ${fileName}...`);
 
         // For bulk upload, use the same file for both preview and download
-        // In a production scenario, you'd want watermarking on the backend
+        // Backend handles watermarking for preview
         await uploadPictureTemplate({
           title: bulkTitle || fileName,
           basePrice: parseFloat(bulkBasePrice),
@@ -329,7 +330,7 @@ const PictureTemplatesManager = () => {
             ? parseFloat(bulkDiscountPrice)
             : undefined,
           previewImageFile: file,
-          downloadImageFile: file, // Same file for now
+          downloadImageFile: file, // Same file - backend will watermark the preview
           parentId: currentFolderId,
         });
 
@@ -345,10 +346,9 @@ const PictureTemplatesManager = () => {
       `Completed: ${successCount} succeeded, ${failedCount} failed`,
     );
 
-    // Refresh the list
-    const data = await getPictureHierarchy(currentFolderId);
-    setTemplates(data.templates || []);
-
+    // The useEffect will automatically refresh the list when we close the dialog
+    // So we don't need to manually call getPictureHierarchy here
+    
     // Reset form after a delay
     setTimeout(() => {
       setBulkUploadOpen(false);
@@ -359,6 +359,7 @@ const PictureTemplatesManager = () => {
       setBulkImageFiles(null);
       setUploadProgress(0);
       setUploadStatus("");
+      setIsBulkUploading(false);
     }, 2000);
   }
 
@@ -1062,7 +1063,7 @@ const PictureTemplatesManager = () => {
           <DialogHeader>
             <DialogTitle>Upload New Picture Template</DialogTitle>
             <DialogDescription>
-              Upload a new picture template with preview and download images.
+              Upload a picture template. The image will be automatically watermarked for preview.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleUploadTemplate} className="space-y-4">
@@ -1115,31 +1116,20 @@ const PictureTemplatesManager = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="previewImage">Preview Image *</Label>
-                <Input
-                  id="previewImage"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) =>
-                    setPreviewImageFile(e.target.files?.[0] || null)
-                  }
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="downloadImage">Download Image *</Label>
-                <Input
-                  id="downloadImage"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) =>
-                    setDownloadImageFile(e.target.files?.[0] || null)
-                  }
-                  required
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="imageFile">Image File * (JPEG, PNG, JPG, GIF, WebP)</Label>
+              <Input
+                id="imageFile"
+                type="file"
+                accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
+                onChange={(e) =>
+                  setImageFile(e.target.files?.[0] || null)
+                }
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                The image will be watermarked for preview and kept original for download after purchase.
+              </p>
             </div>
 
             <div className="flex justify-end space-x-2 pt-2">
@@ -1147,6 +1137,7 @@ const PictureTemplatesManager = () => {
                 type="button"
                 variant="outline"
                 onClick={() => setUploadOpen(false)}
+                disabled={isUploading}
               >
                 Cancel
               </Button>
@@ -1675,15 +1666,15 @@ const PictureTemplatesManager = () => {
                 type="button"
                 variant="outline"
                 onClick={() => setBulkUploadOpen(false)}
-                disabled={uploadProgress > 0 && uploadProgress < 100}
+                disabled={isBulkUploading}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                disabled={uploadProgress > 0 && uploadProgress < 100}
+                disabled={isBulkUploading}
               >
-                Upload All
+                {isBulkUploading ? "Uploading..." : "Upload All"}
               </Button>
             </div>
           </form>
