@@ -174,7 +174,7 @@ router.get("/video-hierarchy", async (req, res) => {
     const filter = { parentId: folderId || null };
     const [folders, rawVideos, path] = await Promise.all([
       VideoFolder.find(filter).sort({ createdAt: 1 }),
-      VideoContent.find(folderId ? { folderId } : {}).sort({ createdAt: -1 }),
+      VideoContent.find(folderId ? { folderId } : {}).sort({ createdAt: 1 }),
       buildVideoPath(folderId),
     ]);
 

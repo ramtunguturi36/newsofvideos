@@ -179,7 +179,7 @@ router.get("/picture-hierarchy", async (req, res) => {
     const [folders, rawTemplates, path] = await Promise.all([
       PictureFolder.find(filter).sort({ createdAt: 1 }),
       PictureTemplate.find(folderId ? { folderId } : {}).sort({
-        createdAt: -1,
+        createdAt: 1,
       }),
       buildPicturePath(folderId),
     ]);
