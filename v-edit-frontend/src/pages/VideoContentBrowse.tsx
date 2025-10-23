@@ -16,6 +16,12 @@ import {
   Video,
   Film,
   Loader2,
+  Play,
+  X,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize,
 } from "lucide-react";
 import { getVideoHierarchy } from "@/lib/backend";
 import type { VideoFolder, VideoContent } from "@/lib/types";
@@ -24,6 +30,7 @@ import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import MarketplaceHeader from "@/components/MarketplaceHeader";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 export default function VideoContentBrowse() {
   const navigate = useNavigate();
@@ -39,6 +46,17 @@ export default function VideoContentBrowse() {
   const { addItem, items: cartItems } = useCart();
 
   const folderId = params.get("folderId") || undefined;
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // Video modal state
+  const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [videoRef, setVideoRef] = useState<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     loadData();
@@ -101,6 +119,51 @@ export default function VideoContentBrowse() {
       video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       video.description?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  // Pagination logic for videos
+  const totalPages = Math.ceil(filteredVideos.length / itemsPerPage);
+  const paginatedVideos = filteredVideos.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterType, folderId]);
+
+  const handleVideoPlay = (videoUrl: string) => {
+    setSelectedVideo(videoUrl);
+    setIsVideoModalOpen(true);
+    setIsPlaying(true);
+    setIsMuted(false);
+  };
+
+  const togglePlayPause = () => {
+    if (videoRef) {
+      if (isPlaying) {
+        videoRef.pause();
+      } else {
+        videoRef.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef) {
+      videoRef.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const handleFullscreen = () => {
+    if (videoRef) {
+      if (videoRef.requestFullscreen) {
+        videoRef.requestFullscreen();
+      }
+    }
+  };
 
   if (loading) {
     return (
@@ -340,21 +403,106 @@ export default function VideoContentBrowse() {
                     </div>
                   ))}
                 </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="mt-8 flex items-center justify-center space-x-2">
+                    <Button
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(1, prev - 1))
+                      }
+                      disabled={currentPage === 1}
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full"
+                    >
+                      Previous
+                    </Button>
+
+                    <div className="flex items-center space-x-1">
+                      {[...Array(Math.min(5, totalPages))].map((_, idx) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = idx + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = idx + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + idx;
+                        } else {
+                          pageNum = currentPage - 2 + idx;
+                        }
+
+                        return (
+                          <Button
+                            key={pageNum}
+                            onClick={() => setCurrentPage(pageNum)}
+                            variant={
+                              currentPage === pageNum ? "default" : "outline"
+                            }
+                            size="sm"
+                            className={`rounded-full w-10 h-10 ${
+                              currentPage === pageNum
+                                ? "bg-gradient-to-r from-green-600 to-teal-600 text-white"
+                                : ""
+                            }`}
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                    </div>
+
+                    <Button
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full"
+                    >
+                      Next
+                    </Button>
+
+                    <span className="text-sm text-slate-600 ml-4">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 
           {/* Videos Grid - Only show when inside a folder */}
           {filteredVideos.length > 0 && folderId && (
             <div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
-                <Film className="h-6 w-6 mr-2 text-green-600" />
-                Video Content
-                <span className="ml-3 text-sm font-normal text-slate-500">
-                  ({filteredVideos.length})
-                </span>
-              </h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-slate-900 flex items-center">
+                  <Film className="h-6 w-6 mr-2 text-green-600" />
+                  Video Content
+                  <span className="ml-3 text-sm font-normal text-slate-500">
+                    ({filteredVideos.length} total)
+                  </span>
+                </h2>
+
+                {/* Items per page selector */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-slate-600">Show:</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                    className="border border-slate-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                  <span className="text-sm text-slate-600">per page</span>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredVideos.map((video) => (
+                {paginatedVideos.map((video) => (
                   <div
                     key={video._id}
                     className="group bg-white rounded-2xl overflow-hidden border border-slate-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
@@ -362,19 +510,32 @@ export default function VideoContentBrowse() {
                     {/* Video Preview */}
                     <div className="relative aspect-video bg-black overflow-hidden">
                       {video.previewVideoUrl ? (
-                        <video
-                          className="w-full h-full object-cover"
-                          src={video.previewVideoUrl}
-                          muted
-                          loop
-                          playsInline
-                          preload="metadata"
-                          onMouseEnter={(e) => e.currentTarget.play()}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.pause();
-                            e.currentTarget.currentTime = 0;
-                          }}
-                        />
+                        <>
+                          <video
+                            className="w-full h-full object-cover"
+                            src={video.previewVideoUrl}
+                            muted
+                            loop
+                            playsInline
+                            preload="metadata"
+                            onMouseEnter={(e) => e.currentTarget.play()}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.pause();
+                              e.currentTarget.currentTime = 0;
+                            }}
+                          />
+                          {/* Play button overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <button
+                              onClick={() =>
+                                handleVideoPlay(video.previewVideoUrl!)
+                              }
+                              className="bg-white/90 hover:bg-white rounded-full p-4 shadow-2xl transform hover:scale-110 transition-all duration-300"
+                            >
+                              <Play className="h-8 w-8 text-green-600 fill-green-600" />
+                            </button>
+                          </div>
+                        </>
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-700 to-slate-800">
                           <Film className="h-12 w-12 text-slate-400" />
@@ -452,6 +613,69 @@ export default function VideoContentBrowse() {
       </main>
 
       <Footer />
+
+      {/* Video Player Modal */}
+      <Dialog open={isVideoModalOpen} onOpenChange={setIsVideoModalOpen}>
+        <DialogContent className="max-w-4xl p-0 bg-black">
+          <div className="relative">
+            {selectedVideo && (
+              <div className="relative bg-black">
+                <video
+                  ref={setVideoRef}
+                  src={selectedVideo}
+                  className="w-full max-h-[80vh] object-contain"
+                  autoPlay
+                  loop
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                />
+
+                {/* Video Controls Overlay */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                  <div className="flex items-center justify-center space-x-4">
+                    <button
+                      onClick={togglePlayPause}
+                      className="bg-white/90 hover:bg-white rounded-full p-3 transition-all"
+                    >
+                      {isPlaying ? (
+                        <Pause className="h-6 w-6 text-green-600" />
+                      ) : (
+                        <Play className="h-6 w-6 text-green-600 fill-green-600" />
+                      )}
+                    </button>
+
+                    <button
+                      onClick={toggleMute}
+                      className="bg-white/90 hover:bg-white rounded-full p-3 transition-all"
+                    >
+                      {isMuted ? (
+                        <VolumeX className="h-6 w-6 text-green-600" />
+                      ) : (
+                        <Volume2 className="h-6 w-6 text-green-600" />
+                      )}
+                    </button>
+
+                    <button
+                      onClick={handleFullscreen}
+                      className="bg-white/90 hover:bg-white rounded-full p-3 transition-all"
+                    >
+                      <Maximize className="h-6 w-6 text-green-600" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Close button */}
+                <button
+                  onClick={() => setIsVideoModalOpen(false)}
+                  className="absolute top-4 right-4 bg-white/90 hover:bg-white rounded-full p-2 transition-all"
+                >
+                  <X className="h-6 w-6 text-slate-900" />
+                </button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

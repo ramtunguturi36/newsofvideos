@@ -39,6 +39,10 @@ export default function PicturesBrowse() {
 
   const folderId = params.get("folderId") || undefined;
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+
   useEffect(() => {
     loadData();
   }, [folderId]);
@@ -103,6 +107,18 @@ export default function PicturesBrowse() {
       template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       template.description?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  // Pagination logic for templates
+  const totalPages = Math.ceil(filteredTemplates.length / itemsPerPage);
+  const paginatedTemplates = filteredTemplates.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterType, folderId]);
 
   if (loading) {
     return (
@@ -348,15 +364,34 @@ export default function PicturesBrowse() {
           {/* Templates Grid - Only show when inside a folder */}
           {filteredTemplates.length > 0 && folderId && (
             <div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
-                <Image className="h-6 w-6 mr-2 text-purple-600" />
-                Picture Templates
-                <span className="ml-3 text-sm font-normal text-slate-500">
-                  ({filteredTemplates.length})
-                </span>
-              </h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-slate-900 flex items-center">
+                  <Image className="h-6 w-6 mr-2 text-purple-600" />
+                  Picture Templates
+                  <span className="ml-3 text-sm font-normal text-slate-500">
+                    ({filteredTemplates.length} total)
+                  </span>
+                </h2>
+
+                {/* Items per page selector */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-slate-600">Show:</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                    className="border border-slate-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                  <span className="text-sm text-slate-600">per page</span>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredTemplates.map((template) => (
+                {paginatedTemplates.map((template) => (
                   <div
                     key={template._id}
                     className="group bg-white rounded-2xl overflow-hidden border border-slate-200 hover:border-purple-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
@@ -416,6 +451,72 @@ export default function PicturesBrowse() {
                   </div>
                 ))}
               </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="mt-8 flex items-center justify-center space-x-2">
+                  <Button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(1, prev - 1))
+                    }
+                    disabled={currentPage === 1}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                  >
+                    Previous
+                  </Button>
+
+                  <div className="flex items-center space-x-1">
+                    {[...Array(Math.min(5, totalPages))].map((_, idx) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = idx + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = idx + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + idx;
+                      } else {
+                        pageNum = currentPage - 2 + idx;
+                      }
+
+                      return (
+                        <Button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          variant={
+                            currentPage === pageNum ? "default" : "outline"
+                          }
+                          size="sm"
+                          className={`rounded-full w-10 h-10 ${
+                            currentPage === pageNum
+                              ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white"
+                              : ""
+                          }`}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+
+                  <Button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                  >
+                    Next
+                  </Button>
+
+                  <span className="text-sm text-slate-600 ml-4">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
