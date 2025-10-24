@@ -26,6 +26,7 @@ import {
 import { useCart } from "@/context/CartContext";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import type { Folder, TemplateItem } from "@/lib/backend";
+import { toast } from "sonner";
 import {
   Plus,
   Upload,
@@ -82,6 +83,7 @@ const TemplatesManager = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [qrFile, setQrFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [useOriginalName, setUseOriginalName] = useState(true);
 
   // Edit states
   const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
@@ -163,8 +165,13 @@ const TemplatesManager = () => {
 
   async function handleUploadTemplate(e: React.FormEvent) {
     e.preventDefault();
-    if (!title || !basePrice || !videoFile || !qrFile) {
-      alert("Please fill all required fields");
+    if (!basePrice || !videoFile || !qrFile) {
+      toast.error("Price, video file, and QR code are required");
+      return;
+    }
+
+    if (!useOriginalName && !title.trim()) {
+      toast.error("Title is required when using custom name");
       return;
     }
 
@@ -204,22 +211,24 @@ const TemplatesManager = () => {
 
     setIsUploading(true);
     try {
+      // Use original filename or custom title
+      const finalTitle = useOriginalName
+        ? videoFile.name.replace(/\.[^/.]+$/, "") // Remove file extension
+        : title;
+
       // Convert string prices to numbers
       const basePriceNum = parseFloat(basePrice);
       const discountPriceNum =
         hasDiscount && discountPrice ? parseFloat(discountPrice) : undefined;
 
-      // Match field names with backend expectations
-      const templateData = {
-        title,
+      await uploadTemplate({
+        title: finalTitle,
         basePrice: basePriceNum,
         discountPrice: discountPriceNum,
         videoFile,
         qrFile,
         parentId: currentFolderId || undefined,
-      };
-
-      await uploadTemplate(templateData);
+      });
       setUploadOpen(false);
       setTitle("");
       setBasePrice("");
@@ -231,7 +240,7 @@ const TemplatesManager = () => {
       // Refresh the list
       const data = await getHierarchy(currentFolderId);
       setTemplates(data.templates || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading template:", error);
       // Show more detailed error message to the user
       if (error.response) {
@@ -343,7 +352,7 @@ const TemplatesManager = () => {
       // Refresh the list
       const data = await getHierarchy(currentFolderId);
       setTemplates(data.templates || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating template:", error);
       alert("Failed to update template");
     }
@@ -438,7 +447,7 @@ const TemplatesManager = () => {
 
       setDeleteConfirmOpen(false);
       setDeleteItem(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting item:", error);
       const errorMessage =
         error.response?.data?.message || "Failed to delete item";
@@ -926,16 +935,54 @@ const TemplatesManager = () => {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleUploadTemplate} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
-              <Input
-                id="title"
-                placeholder="Enter template title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
+            <div className="space-y-3">
+              <Label>File Naming</Label>
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="useOriginal"
+                    checked={useOriginalName}
+                    onChange={() => setUseOriginalName(true)}
+                    className="h-4 w-4"
+                  />
+                  <Label
+                    htmlFor="useOriginal"
+                    className="font-normal cursor-pointer"
+                  >
+                    Use original filename
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="useCustom"
+                    checked={!useOriginalName}
+                    onChange={() => setUseOriginalName(false)}
+                    className="h-4 w-4"
+                  />
+                  <Label
+                    htmlFor="useCustom"
+                    className="font-normal cursor-pointer"
+                  >
+                    Custom name
+                  </Label>
+                </div>
+              </div>
             </div>
+
+            {!useOriginalName && (
+              <div className="space-y-2">
+                <Label htmlFor="title">Title *</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter template title"
+                  required={!useOriginalName}
+                />
+              </div>
+            )}
 
             <div className="space-y-4">
               <div className="space-y-2">

@@ -24,6 +24,7 @@ import {
 import { useCart } from "@/context/CartContext";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import type { PictureFolder, PictureTemplate } from "@/lib/types";
+import { toast } from "sonner";
 import {
   Plus,
   Upload,
@@ -82,6 +83,7 @@ const PictureTemplatesManager = () => {
   const [hasDiscount, setHasDiscount] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [useOriginalName, setUseOriginalName] = useState(true);
 
   // Bulk upload state
   const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
@@ -93,6 +95,7 @@ const PictureTemplatesManager = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState("");
   const [isBulkUploading, setIsBulkUploading] = useState(false);
+  const [bulkUseOriginalName, setBulkUseOriginalName] = useState(true);
 
   // Edit states
   const [selectedFolder, setSelectedFolder] = useState<PictureFolder | null>(
@@ -212,8 +215,13 @@ const PictureTemplatesManager = () => {
 
   async function handleUploadTemplate(e: React.FormEvent) {
     e.preventDefault();
-    if (!title || !basePrice || !imageFile) {
-      alert("Please fill all required fields");
+    if (!basePrice || !imageFile) {
+      toast.error("Price and image file are required");
+      return;
+    }
+
+    if (!useOriginalName && !title.trim()) {
+      toast.error("Title is required when using custom name");
       return;
     }
 
@@ -247,18 +255,21 @@ const PictureTemplatesManager = () => {
     ];
 
     if (!validImageTypes.includes(imageFile.type)) {
-      alert(
-        "Please upload a valid image file (JPEG, PNG, JPG, GIF, or WebP)",
-      );
+      alert("Please upload a valid image file (JPEG, PNG, JPG, GIF, or WebP)");
       return;
     }
 
     setIsUploading(true);
     try {
+      // Use original filename or custom title
+      const finalTitle = useOriginalName
+        ? imageFile.name.replace(/\.[^/.]+$/, "") // Remove file extension
+        : title;
+
       // Use the same file for both preview and download
       // Backend will watermark the preview and keep the original for download
       await uploadPictureTemplate({
-        title,
+        title: finalTitle,
         basePrice: parseFloat(basePrice),
         discountPrice: hasDiscount ? parseFloat(discountPrice) : undefined,
         previewImageFile: imageFile,
@@ -286,10 +297,10 @@ const PictureTemplatesManager = () => {
 
   async function handleBulkUpload(e: React.FormEvent) {
     e.preventDefault();
-    
+
     // Prevent double submission
     if (isBulkUploading) return;
-    
+
     if (!bulkImageFiles || bulkImageFiles.length === 0) {
       alert("Please select at least one image file");
       return;
@@ -306,6 +317,18 @@ const PictureTemplatesManager = () => {
       return;
     }
 
+    if (!bulkBasePrice || !bulkImageFiles || bulkImageFiles.length === 0) {
+      toast.error(
+        "Please fill all required fields and select at least one image file",
+      );
+      return;
+    }
+
+    if (!bulkUseOriginalName && !bulkTitle.trim()) {
+      toast.error("Base title is required when using custom names");
+      return;
+    }
+
     setIsBulkUploading(true);
     setUploadProgress(0);
     setUploadStatus("Starting bulk upload...");
@@ -315,12 +338,18 @@ const PictureTemplatesManager = () => {
     let failedCount = 0;
 
     for (let i = 0; i < totalFiles; i++) {
-      const file = bulkImageFiles[i];
+      const imageFile = bulkImageFiles[i];
       const itemNumber = i + 1;
-      const itemTitle = bulkTitle ? `${bulkTitle} ${itemNumber}` : file.name.replace(/\.[^/.]+$/, "");
+
+      // Use original filename or custom name with numbering
+      const itemTitle = bulkUseOriginalName
+        ? imageFile.name.replace(/\.[^/.]+$/, "") // Remove file extension
+        : `${bulkTitle} ${itemNumber}`;
 
       try {
-        setUploadStatus(`Uploading ${itemNumber}/${totalFiles}: ${itemTitle}...`);
+        setUploadStatus(
+          `Uploading ${itemNumber}/${totalFiles}: ${itemTitle}...`,
+        );
 
         // For bulk upload, use the same file for both preview and download
         // Backend handles watermarking for preview
@@ -330,8 +359,8 @@ const PictureTemplatesManager = () => {
           discountPrice: bulkHasDiscount
             ? parseFloat(bulkDiscountPrice)
             : undefined,
-          previewImageFile: file,
-          downloadImageFile: file, // Same file - backend will watermark the preview
+          previewImageFile: imageFile,
+          downloadImageFile: imageFile, // Same file - backend will watermark the preview
           parentId: currentFolderId,
         });
 
@@ -349,7 +378,7 @@ const PictureTemplatesManager = () => {
 
     // The useEffect will automatically refresh the list when we close the dialog
     // So we don't need to manually call getPictureHierarchy here
-    
+
     // Reset form after a delay
     setTimeout(() => {
       setBulkUploadOpen(false);
@@ -1064,20 +1093,59 @@ const PictureTemplatesManager = () => {
           <DialogHeader>
             <DialogTitle>Upload New Picture Template</DialogTitle>
             <DialogDescription>
-              Upload a picture template. The image will be automatically watermarked for preview.
+              Upload a picture template. The image will be automatically
+              watermarked for preview.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleUploadTemplate} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
-              <Input
-                id="title"
-                placeholder="Enter template title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
+            <div className="space-y-3">
+              <Label>File Naming</Label>
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="useOriginal"
+                    checked={useOriginalName}
+                    onChange={() => setUseOriginalName(true)}
+                    className="h-4 w-4"
+                  />
+                  <Label
+                    htmlFor="useOriginal"
+                    className="font-normal cursor-pointer"
+                  >
+                    Use original filename
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="useCustom"
+                    checked={!useOriginalName}
+                    onChange={() => setUseOriginalName(false)}
+                    className="h-4 w-4"
+                  />
+                  <Label
+                    htmlFor="useCustom"
+                    className="font-normal cursor-pointer"
+                  >
+                    Custom name
+                  </Label>
+                </div>
+              </div>
             </div>
+
+            {!useOriginalName && (
+              <div className="space-y-2">
+                <Label htmlFor="title">Title *</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter template title"
+                  required={!useOriginalName}
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="basePrice">Base Price *</Label>
@@ -1118,18 +1186,19 @@ const PictureTemplatesManager = () => {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="imageFile">Image File * (JPEG, PNG, JPG, GIF, WebP)</Label>
+              <Label htmlFor="imageFile">
+                Image File * (JPEG, PNG, JPG, GIF, WebP)
+              </Label>
               <Input
                 id="imageFile"
                 type="file"
                 accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                onChange={(e) =>
-                  setImageFile(e.target.files?.[0] || null)
-                }
+                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
                 required
               />
               <p className="text-xs text-gray-500 mt-1">
-                The image will be watermarked for preview and kept original for download after purchase.
+                The image will be watermarked for preview and kept original for
+                download after purchase.
               </p>
             </div>
 
@@ -1583,17 +1652,57 @@ const PictureTemplatesManager = () => {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleBulkUpload} className="space-y-4">
-            <div>
-              <Label htmlFor="bulkTitle">
-                Title Prefix (optional - uses filename if empty)
-              </Label>
-              <Input
-                id="bulkTitle"
-                value={bulkTitle}
-                onChange={(e) => setBulkTitle(e.target.value)}
-                placeholder="Enter title prefix"
-              />
+            <div className="space-y-3">
+              <Label>File Naming</Label>
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="bulkUseOriginal"
+                    checked={bulkUseOriginalName}
+                    onChange={() => setBulkUseOriginalName(true)}
+                    className="h-4 w-4"
+                  />
+                  <Label
+                    htmlFor="bulkUseOriginal"
+                    className="font-normal cursor-pointer"
+                  >
+                    Use original filenames
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="bulkUseCustom"
+                    checked={!bulkUseOriginalName}
+                    onChange={() => setBulkUseOriginalName(false)}
+                    className="h-4 w-4"
+                  />
+                  <Label
+                    htmlFor="bulkUseCustom"
+                    className="font-normal cursor-pointer"
+                  >
+                    Custom names
+                  </Label>
+                </div>
+              </div>
             </div>
+
+            {!bulkUseOriginalName && (
+              <div>
+                <Label htmlFor="bulkTitle">Base Title *</Label>
+                <Input
+                  id="bulkTitle"
+                  value={bulkTitle}
+                  onChange={(e) => setBulkTitle(e.target.value)}
+                  placeholder="e.g., Template"
+                  required={!bulkUseOriginalName}
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Files will be named: "{bulkTitle} 1", "{bulkTitle} 2", etc.
+                </p>
+              </div>
+            )}
 
             <div>
               <Label htmlFor="bulkBasePrice">Base Price (₹) *</Label>
@@ -1671,10 +1780,7 @@ const PictureTemplatesManager = () => {
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={isBulkUploading}
-              >
+              <Button type="submit" disabled={isBulkUploading}>
                 {isBulkUploading ? "Uploading..." : "Upload All"}
               </Button>
             </div>

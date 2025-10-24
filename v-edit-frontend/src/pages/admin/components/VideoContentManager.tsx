@@ -76,6 +76,7 @@ const VideoContentManager = () => {
   const [hasDiscount, setHasDiscount] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [useOriginalName, setUseOriginalName] = useState(true);
 
   // Bulk upload state
   const [bulkTitle, setBulkTitle] = useState("");
@@ -85,6 +86,7 @@ const VideoContentManager = () => {
   const [bulkVideoFiles, setBulkVideoFiles] = useState<FileList | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState("");
+  const [bulkUseOriginalName, setBulkUseOriginalName] = useState(true);
 
   // Edit states
   const [selectedFolder, setSelectedFolder] = useState<VideoFolder | null>(
@@ -172,15 +174,25 @@ const VideoContentManager = () => {
   async function handleUploadVideo(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!title.trim() || !basePrice || !videoFile) {
-      toast.error("Title, price, and video file are required");
+    if (!basePrice || !videoFile) {
+      toast.error("Price and video file are required");
+      return;
+    }
+
+    if (!useOriginalName && !title.trim()) {
+      toast.error("Title is required when using custom name");
       return;
     }
 
     setIsUploading(true);
     try {
+      // Use original filename or custom title
+      const finalTitle = useOriginalName
+        ? videoFile.name.replace(/\.[^/.]+$/, "") // Remove file extension
+        : title;
+
       await uploadVideoContent({
-        title,
+        title: finalTitle,
         basePrice: parseFloat(basePrice),
         discountPrice:
           hasDiscount && discountPrice ? parseFloat(discountPrice) : undefined,
@@ -202,15 +214,15 @@ const VideoContentManager = () => {
 
   async function handleBulkUpload(e: React.FormEvent) {
     e.preventDefault();
-    if (
-      !bulkTitle.trim() ||
-      !bulkBasePrice ||
-      !bulkVideoFiles ||
-      bulkVideoFiles.length === 0
-    ) {
+    if (!bulkBasePrice || !bulkVideoFiles || bulkVideoFiles.length === 0) {
       toast.error(
         "Please fill all required fields and select at least one video file",
       );
+      return;
+    }
+
+    if (!bulkUseOriginalName && !bulkTitle.trim()) {
+      toast.error("Base title is required when using custom names");
       return;
     }
 
@@ -239,7 +251,11 @@ const VideoContentManager = () => {
       for (let i = 0; i < bulkVideoFiles.length; i++) {
         const videoFile = bulkVideoFiles[i];
         const itemNumber = i + 1;
-        const itemTitle = `${bulkTitle} ${itemNumber}`;
+
+        // Use original filename or custom name with numbering
+        const itemTitle = bulkUseOriginalName
+          ? videoFile.name.replace(/\.[^/.]+$/, "") // Remove file extension
+          : `${bulkTitle} ${itemNumber}`;
 
         setUploadStatus(
           `Uploading ${itemNumber} of ${totalFiles}: ${itemTitle}`,
@@ -970,16 +986,54 @@ const VideoContentManager = () => {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleUploadVideo} className="space-y-4">
-            <div>
-              <Label htmlFor="title">Title *</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter video title"
-                required
-              />
+            <div className="space-y-3">
+              <Label>File Naming</Label>
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="useOriginal"
+                    checked={useOriginalName}
+                    onChange={() => setUseOriginalName(true)}
+                    className="h-4 w-4"
+                  />
+                  <Label
+                    htmlFor="useOriginal"
+                    className="font-normal cursor-pointer"
+                  >
+                    Use original filename
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="useCustom"
+                    checked={!useOriginalName}
+                    onChange={() => setUseOriginalName(false)}
+                    className="h-4 w-4"
+                  />
+                  <Label
+                    htmlFor="useCustom"
+                    className="font-normal cursor-pointer"
+                  >
+                    Custom name
+                  </Label>
+                </div>
+              </div>
             </div>
+
+            {!useOriginalName && (
+              <div>
+                <Label htmlFor="title">Title *</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter video title"
+                  required={!useOriginalName}
+                />
+              </div>
+            )}
 
             <div>
               <Label htmlFor="basePrice">Base Price (₹) *</Label>
@@ -1078,19 +1132,57 @@ const VideoContentManager = () => {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleBulkUpload} className="space-y-4">
-            <div>
-              <Label htmlFor="bulkTitle">Base Title *</Label>
-              <Input
-                id="bulkTitle"
-                value={bulkTitle}
-                onChange={(e) => setBulkTitle(e.target.value)}
-                placeholder="e.g., Tutorial Video"
-                required
-              />
-              <p className="text-xs text-slate-500 mt-1">
-                Videos will be named: "{bulkTitle} 1", "{bulkTitle} 2", etc.
-              </p>
+            <div className="space-y-3">
+              <Label>File Naming</Label>
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="bulkUseOriginal"
+                    checked={bulkUseOriginalName}
+                    onChange={() => setBulkUseOriginalName(true)}
+                    className="h-4 w-4"
+                  />
+                  <Label
+                    htmlFor="bulkUseOriginal"
+                    className="font-normal cursor-pointer"
+                  >
+                    Use original filenames
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="bulkUseCustom"
+                    checked={!bulkUseOriginalName}
+                    onChange={() => setBulkUseOriginalName(false)}
+                    className="h-4 w-4"
+                  />
+                  <Label
+                    htmlFor="bulkUseCustom"
+                    className="font-normal cursor-pointer"
+                  >
+                    Custom names
+                  </Label>
+                </div>
+              </div>
             </div>
+
+            {!bulkUseOriginalName && (
+              <div>
+                <Label htmlFor="bulkTitle">Base Title *</Label>
+                <Input
+                  id="bulkTitle"
+                  value={bulkTitle}
+                  onChange={(e) => setBulkTitle(e.target.value)}
+                  placeholder="e.g., Video Clip"
+                  required={!bulkUseOriginalName}
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Files will be named: "{bulkTitle} 1", "{bulkTitle} 2", etc.
+                </p>
+              </div>
+            )}
 
             <div>
               <Label htmlFor="bulkBasePrice">Base Price (₹) *</Label>
