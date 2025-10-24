@@ -18,12 +18,19 @@ import {
   ShoppingBag,
   Eye,
   ExternalLink,
+  X,
 } from "lucide-react";
 import { backend } from "@/lib/backend";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type CategoryType =
   | "all"
@@ -74,6 +81,23 @@ interface Stats {
   };
 }
 
+interface FolderContentItem {
+  _id: string;
+  title: string;
+  description?: string;
+  basePrice: number;
+  discountPrice?: number;
+  qrUrl?: string;
+  videoUrl?: string;
+  previewImageUrl?: string;
+  downloadImageUrl?: string;
+  previewVideoUrl?: string;
+  downloadVideoUrl?: string;
+  previewAudioUrl?: string;
+  downloadAudioUrl?: string;
+  thumbnailUrl?: string;
+}
+
 export default function MyPurchases() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -98,6 +122,11 @@ export default function MyPurchases() {
     },
   });
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [viewingFolder, setViewingFolder] = useState<PurchaseFolder | null>(
+    null,
+  );
+  const [folderContents, setFolderContents] = useState<FolderContentItem[]>([]);
+  const [loadingContents, setLoadingContents] = useState(false);
   const isLoadingRef = React.useRef(false);
   const hasLoadedRef = React.useRef(false);
 
@@ -440,6 +469,99 @@ export default function MyPurchases() {
       toast.error("Download failed");
     } finally {
       setDownloading(null);
+    }
+  };
+
+  const handleViewFolder = async (folder: PurchaseFolder) => {
+    try {
+      setViewingFolder(folder);
+      setLoadingContents(true);
+
+      // Determine folder type
+      let folderType = "video";
+      if (folder.category === "pictures") folderType = "picture";
+      else if (folder.category === "video-content")
+        folderType = "video-content";
+      else if (folder.category === "audio") folderType = "audio";
+      else if (folder.category === "video-templates") folderType = "video";
+
+      // Fetch folder contents from backend
+      const response = await backend.get(
+        `/purchases/folder-contents/${folder._id}?type=${folderType}`,
+      );
+
+      setFolderContents(response.data.items || []);
+      setLoadingContents(false);
+    } catch (error) {
+      console.error("Error loading folder contents:", error);
+      toast.error("Failed to load folder contents");
+      setLoadingContents(false);
+      setViewingFolder(null);
+    }
+  };
+
+  const handleDownloadFolderItem = async (item: FolderContentItem) => {
+    try {
+      const downloadUrl =
+        item.downloadImageUrl ||
+        item.downloadVideoUrl ||
+        item.downloadAudioUrl ||
+        item.videoUrl ||
+        item.qrUrl;
+
+      if (!downloadUrl) {
+        toast.error("No download URL available");
+        return;
+      }
+
+      toast.info("Starting download...");
+
+      // Determine file extension
+      const fileExt = downloadUrl.includes(".png")
+        ? "png"
+        : downloadUrl.includes(".jpg") || downloadUrl.includes(".jpeg")
+          ? "jpg"
+          : downloadUrl.includes(".mp4")
+            ? "mp4"
+            : downloadUrl.includes(".mp3")
+              ? "mp3"
+              : downloadUrl.includes(".wav")
+                ? "wav"
+                : "file";
+
+      const fileName = `${item.title.replace(/[^a-zA-Z0-9]/g, "-")}.${fileExt}`;
+
+      // Use backend download proxy
+      const apiBaseUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const token = localStorage.getItem("token");
+      const proxyUrl = `${apiBaseUrl}/api/download-proxy?url=${encodeURIComponent(downloadUrl)}&filename=${encodeURIComponent(fileName)}`;
+
+      const response = await fetch(proxyUrl, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Download failed");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Download started!");
+    } catch (error) {
+      console.error("Error downloading item:", error);
+      toast.error("Failed to download item");
     }
   };
 
@@ -882,7 +1004,10 @@ export default function MyPurchases() {
                               </span>
                             )}
                           </div>
-                          <Button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl">
+                          <Button
+                            onClick={() => handleViewFolder(folder)}
+                            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl"
+                          >
                             <ExternalLink className="h-4 w-4 mr-2" />
                             View Folder
                           </Button>
@@ -898,6 +1023,151 @@ export default function MyPurchases() {
       </main>
 
       <Footer />
+
+      {/* Folder Contents Modal */}
+      <Dialog
+        open={!!viewingFolder}
+        onOpenChange={() => setViewingFolder(null)}
+      >
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-slate-900">
+              {viewingFolder?.name} - Contents
+            </DialogTitle>
+          </DialogHeader>
+
+          {loadingContents ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-12 w-12 animate-spin text-purple-600" />
+            </div>
+          ) : (
+            <div className="mt-4">
+              <p className="text-sm text-slate-600 mb-6">
+                {folderContents.length} items in this folder
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {folderContents.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-gradient-to-br from-slate-50 to-white p-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all"
+                  >
+                    {/* Preview - Video/Audio/Image/QR */}
+                    <div className="relative h-40 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg mb-3 overflow-hidden">
+                      {/* Video Player */}
+                      {(item.videoUrl ||
+                        item.previewVideoUrl ||
+                        item.downloadVideoUrl) && (
+                        <video
+                          controls
+                          className="w-full h-full object-cover"
+                          src={
+                            item.videoUrl ||
+                            item.previewVideoUrl ||
+                            item.downloadVideoUrl
+                          }
+                        >
+                          Your browser does not support video playback.
+                        </video>
+                      )}
+                      {/* Audio Player */}
+                      {!item.videoUrl &&
+                        !item.previewVideoUrl &&
+                        !item.downloadVideoUrl &&
+                        (item.previewAudioUrl || item.downloadAudioUrl) && (
+                          <div className="w-full h-full flex items-center justify-center p-4">
+                            <audio
+                              controls
+                              className="w-full"
+                              src={
+                                item.previewAudioUrl || item.downloadAudioUrl
+                              }
+                            >
+                              Your browser does not support audio playback.
+                            </audio>
+                          </div>
+                        )}
+                      {/* Image Preview */}
+                      {!item.videoUrl &&
+                        !item.previewVideoUrl &&
+                        !item.downloadVideoUrl &&
+                        !item.previewAudioUrl &&
+                        !item.downloadAudioUrl &&
+                        item.previewImageUrl && (
+                          <img
+                            src={item.previewImageUrl}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      {/* Thumbnail */}
+                      {!item.videoUrl &&
+                        !item.previewVideoUrl &&
+                        !item.downloadVideoUrl &&
+                        !item.previewAudioUrl &&
+                        !item.downloadAudioUrl &&
+                        !item.previewImageUrl &&
+                        item.thumbnailUrl && (
+                          <img
+                            src={item.thumbnailUrl}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      {/* QR Code */}
+                      {!item.videoUrl &&
+                        !item.previewVideoUrl &&
+                        !item.downloadVideoUrl &&
+                        !item.previewAudioUrl &&
+                        !item.downloadAudioUrl &&
+                        !item.previewImageUrl &&
+                        !item.thumbnailUrl &&
+                        item.qrUrl && (
+                          <img
+                            src={item.qrUrl}
+                            alt={item.title}
+                            className="w-full h-full object-contain p-4"
+                          />
+                        )}
+                      {/* Fallback */}
+                      {!item.videoUrl &&
+                        !item.previewVideoUrl &&
+                        !item.downloadVideoUrl &&
+                        !item.previewAudioUrl &&
+                        !item.downloadAudioUrl &&
+                        !item.previewImageUrl &&
+                        !item.thumbnailUrl &&
+                        !item.qrUrl && (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Download className="h-12 w-12 text-slate-300" />
+                          </div>
+                        )}
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="font-semibold text-slate-900 mb-1 line-clamp-2">
+                      {item.title}
+                    </h3>
+                    {item.description && (
+                      <p className="text-xs text-slate-500 mb-3 line-clamp-2">
+                        {item.description}
+                      </p>
+                    )}
+
+                    {/* Download Button */}
+                    <Button
+                      onClick={() => handleDownloadFolderItem(item)}
+                      className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg text-sm py-2"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
