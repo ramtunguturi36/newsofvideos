@@ -5,7 +5,13 @@ import { Button } from "@/components/ui/button";
 import { backend } from "@/lib/backend";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Download, Eye, Loader2 } from "lucide-react";
+import { Download, Eye, Loader2, FolderOpen, X } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type PurchaseItem = {
   id: string;
@@ -79,6 +85,10 @@ export default function PaymentSuccess() {
   const [folderItems, setFolderItems] = useState<FolderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [downloadingAll, setDownloadingAll] = useState<string | null>(null);
+  const [viewingFolder, setViewingFolder] = useState<PurchaseItem | null>(null);
+  const [folderContents, setFolderContents] = useState<ContentItem[]>([]);
+  const [loadingContents, setLoadingContents] = useState(false);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -342,46 +352,143 @@ export default function PaymentSuccess() {
     fetchPurchase();
   }, [location, navigate]);
 
-  const handleDownloadAll = async (folder: FolderItem) => {
+  const handleDownloadAllIndividually = async (item: PurchaseItem) => {
+    if (downloadingAll === item.id) return;
+
     try {
-      const itemType =
-        folder.type === "picture-folder"
-          ? "pictures"
-          : folder.type === "video-folder"
-            ? "videos"
-            : "audio tracks";
-      const fileExt =
-        folder.type === "picture-folder"
-          ? "png"
-          : folder.type === "video-folder"
-            ? "mp4"
-            : "mp3";
+      setDownloadingAll(item.id);
 
-      toast.info(`Downloading ${folder.templates.length} ${itemType}...`);
+      // Determine folder type
+      let folderType = "video";
+      if (item.type === "picture-folder") folderType = "picture";
+      else if (item.type === "video-folder") folderType = "video-content";
+      else if (item.type === "audio-folder") folderType = "audio";
 
-      for (let i = 0; i < folder.templates.length; i++) {
-        const template = folder.templates[i];
+      // Fetch folder contents
+      const response = await backend.get(
+        `/purchases/folder-contents/${item.folderId}?type=${folderType}`,
+      );
+
+      const items: ContentItem[] = response.data.items || [];
+
+      if (items.length === 0) {
+        toast.error("No items found in folder");
+        return;
+      }
+
+      toast.info(`Downloading ${items.length} files individually...`, {
+        duration: 3000,
+      });
+
+      // Download each file with delay
+      for (let i = 0; i < items.length; i++) {
+        const contentItem = items[i];
         const downloadUrl =
-          template.downloadImageUrl ||
-          template.downloadVideoUrl ||
-          template.downloadAudioUrl;
+          contentItem.downloadImageUrl ||
+          contentItem.downloadVideoUrl ||
+          contentItem.downloadAudioUrl ||
+          contentItem.videoUrl ||
+          contentItem.qrUrl;
 
         if (downloadUrl) {
+          // Determine file extension
+          const fileExt = downloadUrl.includes(".png")
+            ? "png"
+            : downloadUrl.includes(".jpg") || downloadUrl.includes(".jpeg")
+              ? "jpg"
+              : downloadUrl.includes(".mp4")
+                ? "mp4"
+                : downloadUrl.includes(".mp3")
+                  ? "mp3"
+                  : downloadUrl.includes(".wav")
+                    ? "wav"
+                    : "file";
+
           await handleDownload(
             downloadUrl,
-            `${folder.title}-${i + 1}-${template.title.replace(/\s+/g, "-")}.${fileExt}`,
+            `${i + 1}-${contentItem.title.replace(/[^a-zA-Z0-9]/g, "-")}.${fileExt}`,
           );
-          // Add a longer delay between downloads to avoid browser limits
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+
+          // Delay between downloads to avoid browser blocking
+          if (i < items.length - 1) {
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
         }
       }
 
-      toast.success(
-        `Successfully downloaded ${folder.templates.length} ${itemType}!`,
-      );
+      toast.success(`Successfully downloaded ${items.length} files!`);
     } catch (error) {
-      console.error("Error downloading all items:", error);
-      toast.error("Failed to download some items");
+      console.error("Error downloading all files:", error);
+      toast.error("Failed to download all files");
+    } finally {
+      setDownloadingAll(null);
+    }
+  };
+
+  const handleOpenFolder = async (item: PurchaseItem) => {
+    try {
+      setViewingFolder(item);
+      setLoadingContents(true);
+
+      // Determine folder type
+      let folderType = "video";
+      if (item.type === "picture-folder") folderType = "picture";
+      else if (item.type === "video-folder") folderType = "video-content";
+      else if (item.type === "audio-folder") folderType = "audio";
+
+      // Fetch folder contents from backend
+      const response = await backend.get(
+        `/purchases/folder-contents/${item.folderId}?type=${folderType}`,
+      );
+
+      setFolderContents(response.data.items || []);
+      setLoadingContents(false);
+    } catch (error) {
+      console.error("Error loading folder contents:", error);
+      toast.error("Failed to load folder contents");
+      setLoadingContents(false);
+      setViewingFolder(null);
+    }
+  };
+
+  const handleDownloadFolderItem = async (item: ContentItem) => {
+    try {
+      const downloadUrl =
+        item.downloadImageUrl ||
+        item.downloadVideoUrl ||
+        item.downloadAudioUrl ||
+        item.videoUrl ||
+        item.qrUrl;
+
+      if (!downloadUrl) {
+        toast.error("No download URL available");
+        return;
+      }
+
+      toast.info("Starting download...");
+
+      // Determine file extension
+      const fileExt = downloadUrl.includes(".png")
+        ? "png"
+        : downloadUrl.includes(".jpg") || downloadUrl.includes(".jpeg")
+          ? "jpg"
+          : downloadUrl.includes(".mp4")
+            ? "mp4"
+            : downloadUrl.includes(".mp3")
+              ? "mp3"
+              : downloadUrl.includes(".wav")
+                ? "wav"
+                : "file";
+
+      await handleDownload(
+        downloadUrl,
+        `${item.title.replace(/[^a-zA-Z0-9]/g, "-")}.${fileExt}`,
+      );
+
+      toast.success("Download started!");
+    } catch (error) {
+      console.error("Error downloading item:", error);
+      toast.error("Failed to download item");
     }
   };
 
@@ -751,11 +858,191 @@ export default function PaymentSuccess() {
                     )}
                   </div>
                 )}
+
+                {/* Action buttons for folder items */}
+                {item.type.includes("folder") && (
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      onClick={() => handleOpenFolder(item)}
+                      disabled={downloadingAll === item.id}
+                      className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg text-sm py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <FolderOpen className="h-4 w-4 mr-1" />
+                      View Contents
+                    </Button>
+                    {/* Download All Individually button */}
+                    {item.type !== "folder" && (
+                      <Button
+                        onClick={() => handleDownloadAllIndividually(item)}
+                        disabled={downloadingAll === item.id}
+                        variant="outline"
+                        className="w-full border-2 border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg text-sm py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {downloadingAll === item.id ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                            Downloading...
+                          </>
+                        ) : (
+                          <>
+                            <Download className="h-4 w-4 mr-1" />
+                            Download All Files
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </motion.div>
       </div>
+
+      {/* Folder Contents Modal */}
+      <Dialog
+        open={!!viewingFolder}
+        onOpenChange={() => setViewingFolder(null)}
+      >
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-slate-900">
+              {viewingFolder?.title} - Contents
+            </DialogTitle>
+          </DialogHeader>
+
+          {loadingContents ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-12 w-12 animate-spin text-purple-600" />
+            </div>
+          ) : (
+            <div className="mt-4">
+              <p className="text-sm text-slate-600 mb-6">
+                {folderContents.length} items in this folder
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {folderContents.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-gradient-to-br from-slate-50 to-white p-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all"
+                  >
+                    {/* Preview - Video/Audio/Image/QR */}
+                    <div className="relative h-40 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg mb-3 overflow-hidden">
+                      {/* Video Player */}
+                      {(item.videoUrl ||
+                        item.previewVideoUrl ||
+                        item.downloadVideoUrl) && (
+                        <video
+                          controls
+                          className="w-full h-full object-cover"
+                          src={
+                            item.videoUrl ||
+                            item.previewVideoUrl ||
+                            item.downloadVideoUrl
+                          }
+                        >
+                          Your browser does not support video playback.
+                        </video>
+                      )}
+                      {/* Audio Player */}
+                      {!item.videoUrl &&
+                        !item.previewVideoUrl &&
+                        !item.downloadVideoUrl &&
+                        (item.previewAudioUrl || item.downloadAudioUrl) && (
+                          <div className="w-full h-full flex items-center justify-center p-4">
+                            <audio
+                              controls
+                              className="w-full"
+                              src={
+                                item.previewAudioUrl || item.downloadAudioUrl
+                              }
+                            >
+                              Your browser does not support audio playback.
+                            </audio>
+                          </div>
+                        )}
+                      {/* Image Preview */}
+                      {!item.videoUrl &&
+                        !item.previewVideoUrl &&
+                        !item.downloadVideoUrl &&
+                        !item.previewAudioUrl &&
+                        !item.downloadAudioUrl &&
+                        item.previewImageUrl && (
+                          <img
+                            src={item.previewImageUrl}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      {/* Thumbnail */}
+                      {!item.videoUrl &&
+                        !item.previewVideoUrl &&
+                        !item.downloadVideoUrl &&
+                        !item.previewAudioUrl &&
+                        !item.downloadAudioUrl &&
+                        !item.previewImageUrl &&
+                        item.thumbnailUrl && (
+                          <img
+                            src={item.thumbnailUrl}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      {/* QR Code */}
+                      {!item.videoUrl &&
+                        !item.previewVideoUrl &&
+                        !item.downloadVideoUrl &&
+                        !item.previewAudioUrl &&
+                        !item.downloadAudioUrl &&
+                        !item.previewImageUrl &&
+                        !item.thumbnailUrl &&
+                        item.qrUrl && (
+                          <img
+                            src={item.qrUrl}
+                            alt={item.title}
+                            className="w-full h-full object-contain p-4"
+                          />
+                        )}
+                      {/* Fallback */}
+                      {!item.videoUrl &&
+                        !item.previewVideoUrl &&
+                        !item.downloadVideoUrl &&
+                        !item.previewAudioUrl &&
+                        !item.downloadAudioUrl &&
+                        !item.previewImageUrl &&
+                        !item.thumbnailUrl &&
+                        !item.qrUrl && (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Download className="h-12 w-12 text-slate-300" />
+                          </div>
+                        )}
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="font-semibold text-slate-900 mb-1 line-clamp-2">
+                      {item.title}
+                    </h3>
+                    {item.description && (
+                      <p className="text-xs text-slate-500 mb-3 line-clamp-2">
+                        {item.description}
+                      </p>
+                    )}
+
+                    {/* Download Button */}
+                    <Button
+                      onClick={() => handleDownloadFolderItem(item)}
+                      className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg text-sm py-2"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
