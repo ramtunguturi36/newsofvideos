@@ -268,65 +268,12 @@ export default function AudioBrowse() {
                 ]
               : [{ label: "Audio Content" }]
           }
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Search audio content..."
         />
 
         <div className="mt-8">
-          {/* Search and Filter Bar */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-            <div className="flex flex-col md:flex-row gap-4">
-              {/* Search */}
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                <Input
-                  type="text"
-                  placeholder="Search audio content..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
-                />
-              </div>
-
-              {/* Filter Buttons */}
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => setFilterType("all")}
-                  variant={filterType === "all" ? "default" : "outline"}
-                  className={`rounded-xl ${
-                    filterType === "all"
-                      ? "bg-gradient-to-r from-orange-600 to-amber-600 text-white"
-                      : "border-2 border-slate-200"
-                  }`}
-                >
-                  <Filter className="h-4 w-4 mr-2" />
-                  All
-                </Button>
-                <Button
-                  onClick={() => setFilterType("bundles")}
-                  variant={filterType === "bundles" ? "default" : "outline"}
-                  className={`rounded-xl ${
-                    filterType === "bundles"
-                      ? "bg-gradient-to-r from-orange-600 to-amber-600 text-white"
-                      : "border-2 border-slate-200"
-                  }`}
-                >
-                  <Gift className="h-4 w-4 mr-2" />
-                  Bundles
-                </Button>
-                <Button
-                  onClick={() => setFilterType("free")}
-                  variant={filterType === "free" ? "default" : "outline"}
-                  className={`rounded-xl ${
-                    filterType === "free"
-                      ? "bg-gradient-to-r from-orange-600 to-amber-600 text-white"
-                      : "border-2 border-slate-200"
-                  }`}
-                >
-                  Free
-                </Button>
-              </div>
-            </div>
-          </div>
-
           {/* Folders Grid - Only show when at root or has subfolders */}
           {filteredFolders.length > 0 &&
             (folderId === undefined || filteredFolders.length > 0) && (

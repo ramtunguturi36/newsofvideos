@@ -1,13 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  Home,
-  ChevronRight,
-  Package,
-  ShoppingBag,
-  ArrowLeft,
-} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Home, ChevronRight, ArrowLeft, Search } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface BreadcrumbItem {
@@ -21,7 +16,9 @@ interface MarketplaceHeaderProps {
   subtitle: string;
   gradient: string;
   breadcrumbs?: BreadcrumbItem[];
-  showQuickLinks?: boolean;
+  searchTerm?: string;
+  onSearchChange?: (value: string) => void;
+  searchPlaceholder?: string;
 }
 
 export default function MarketplaceHeader({
@@ -30,9 +27,20 @@ export default function MarketplaceHeader({
   subtitle,
   gradient,
   breadcrumbs = [],
-  showQuickLinks = true,
+  searchTerm = "",
+  onSearchChange,
+  searchPlaceholder = "Search...",
 }: MarketplaceHeaderProps) {
   const navigate = useNavigate();
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setLocalSearchTerm(value);
+    if (onSearchChange) {
+      onSearchChange(value);
+    }
+  };
 
   return (
     <motion.div
@@ -40,7 +48,9 @@ export default function MarketplaceHeader({
       animate={{ opacity: 1, y: 0 }}
       className="mb-8"
     >
-      <div className={`bg-gradient-to-r ${gradient} rounded-3xl p-6 md:p-8 shadow-2xl text-white relative overflow-hidden`}>
+      <div
+        className={`bg-gradient-to-r ${gradient} rounded-3xl p-6 md:p-8 shadow-2xl text-white relative overflow-hidden`}
+      >
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
@@ -94,65 +104,32 @@ export default function MarketplaceHeader({
                 <IconComponent className="h-8 w-8" />
               </div>
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold mb-1">
-                  {title}
-                </h1>
-                <p className="text-white/90 text-base md:text-lg">
-                  {subtitle}
-                </p>
+                <h1 className="text-3xl md:text-4xl font-bold mb-1">{title}</h1>
+                <p className="text-white/90 text-base md:text-lg">{subtitle}</p>
               </div>
             </div>
+          </div>
 
-            {/* Quick Action Links */}
-            {showQuickLinks && (
-              <div className="flex flex-wrap gap-2">
-                <Link to="/user/my-purchases">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm rounded-full"
-                  >
-                    <Package className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">My Purchases</span>
-                  </Button>
-                </Link>
-                <Link to="/user/orders">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm rounded-full"
-                  >
-                    <ShoppingBag className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Orders</span>
-                  </Button>
-                </Link>
-              </div>
-            )}
+          {/* Search Bar */}
+          <div className="mt-6">
+            <div className="relative max-w-2xl">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <Input
+                type="text"
+                placeholder={searchPlaceholder}
+                value={localSearchTerm}
+                onChange={handleSearchChange}
+                className="w-full pl-12 pr-4 py-3 bg-white/95 backdrop-blur-sm border-2 border-white/30 rounded-xl text-slate-900 placeholder:text-slate-500 focus:border-white focus:ring-2 focus:ring-white/50 shadow-lg"
+              />
+            </div>
           </div>
 
           {/* Navigation Dots (visual indicator) */}
-          <div className="flex items-center space-x-2 mt-6">
+          <div className="flex items-center space-x-2 mt-4">
             <div className="h-2 w-2 bg-white rounded-full animate-pulse"></div>
             <div className="h-1 w-1 bg-white/60 rounded-full"></div>
             <div className="h-1 w-1 bg-white/40 rounded-full"></div>
           </div>
-        </div>
-      </div>
-
-      {/* Category Tags / Info Bar */}
-      <div className="mt-4 flex items-center justify-between bg-white rounded-2xl p-4 shadow-lg border-2 border-slate-100">
-        <div className="flex items-center space-x-4 text-sm text-slate-600">
-          <div className="flex items-center space-x-2">
-            <div className={`h-2 w-2 rounded-full bg-gradient-to-r ${gradient}`}></div>
-            <span className="font-medium">Browse & Purchase</span>
-          </div>
-          <div className="hidden md:flex items-center space-x-2">
-            <span className="text-slate-400">•</span>
-            <span>Instant access after purchase</span>
-          </div>
-        </div>
-        <div className="text-xs text-slate-500 hidden sm:block">
-          Need help? Check our <Link to="#" className="text-purple-600 hover:underline">guide</Link>
         </div>
       </div>
     </motion.div>

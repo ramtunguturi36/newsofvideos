@@ -203,67 +203,10 @@ export default function VideoTemplatesBrowse() {
                   ]
                 : [{ label: "Video Templates" }]
             }
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Search templates and folders..."
           />
-
-          {/* Filters and Search */}
-          <div className="mb-6">
-            <div className="bg-white rounded-2xl p-4 shadow-lg border-2 border-slate-100">
-              <div className="flex flex-col md:flex-row gap-4">
-                {/* Search */}
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input
-                    type="text"
-                    placeholder="Search templates and folders..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 bg-slate-50 border-slate-200 rounded-xl"
-                  />
-                </div>
-
-                {/* Filter Buttons */}
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => setFilterType("all")}
-                    variant={filterType === "all" ? "default" : "outline"}
-                    className={`rounded-xl ${
-                      filterType === "all"
-                        ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white"
-                        : ""
-                    }`}
-                  >
-                    All
-                  </Button>
-                  <Button
-                    onClick={() => setFilterType("bundles")}
-                    variant={filterType === "bundles" ? "default" : "outline"}
-                    className={`rounded-xl ${
-                      filterType === "bundles"
-                        ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white"
-                        : ""
-                    }`}
-                  >
-                    <Package className="h-4 w-4 mr-2" />
-                    Bundles
-                  </Button>
-                  <Button
-                    onClick={() => setFilterType("free")}
-                    variant={filterType === "free" ? "default" : "outline"}
-                    className={`rounded-xl ${
-                      filterType === "free"
-                        ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white"
-                        : ""
-                    }`}
-                  >
-                    <Gift className="h-4 w-4 mr-2" />
-                    Free
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Content Grid */}
 
           {/* Folders Grid - Only show when at root or has subfolders */}
           {filteredFolders.length > 0 &&
