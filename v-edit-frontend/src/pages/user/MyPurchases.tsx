@@ -98,6 +98,8 @@ export default function MyPurchases() {
     },
   });
   const [downloading, setDownloading] = useState<string | null>(null);
+  const isLoadingRef = React.useRef(false);
+  const hasLoadedRef = React.useRef(false);
 
   const categories = [
     {
@@ -133,7 +135,9 @@ export default function MyPurchases() {
   ];
 
   useEffect(() => {
-    loadAllPurchases();
+    if (!hasLoadedRef.current && !isLoadingRef.current) {
+      loadAllPurchases();
+    }
   }, []);
 
   useEffect(() => {
@@ -141,16 +145,29 @@ export default function MyPurchases() {
       category: activeCategory,
       view: activeView,
     });
-  }, [activeCategory, activeView]);
+  }, [activeCategory, activeView, setSearchParams]);
 
   const loadAllPurchases = async () => {
+    // Prevent multiple simultaneous loads
+    if (isLoadingRef.current) {
+      console.log("Already loading purchases, skipping...");
+      return;
+    }
+
     try {
+      isLoadingRef.current = true;
       setLoading(true);
       const response = await backend.get("/purchases");
       const purchases = response.data.purchases || [];
 
+      console.log("=== PURCHASE DATA FROM BACKEND ===");
+      console.log("Total purchases:", purchases.length);
+      console.log("Raw purchase data:", JSON.stringify(purchases, null, 2));
+
       const allItems: PurchaseItem[] = [];
       const allFolders: PurchaseFolder[] = [];
+      const seenItemIds = new Set<string>(); // Track unique item IDs
+      const seenFolderIds = new Set<string>(); // Track unique folder IDs
       const categoryCount = {
         videoTemplates: 0,
         pictures: 0,
@@ -160,7 +177,7 @@ export default function MyPurchases() {
 
       let mostRecentDate: string | undefined;
 
-      purchases.forEach((purchase: any) => {
+      purchases.forEach((purchase: any, purchaseIdx: number) => {
         const purchaseDate = purchase.createdAt || purchase.date;
         if (
           !mostRecentDate ||
@@ -169,84 +186,190 @@ export default function MyPurchases() {
           mostRecentDate = purchaseDate;
         }
 
+        console.log(`\n--- Processing Purchase #${purchaseIdx + 1} ---`);
+        console.log("Total items in purchase:", purchase.items?.length || 0);
+
+        // First pass: identify all folders in this purchase
+        const purchasedFolderIds = new Set<string>();
         purchase.items.forEach((item: any) => {
-          let category: CategoryType = "all";
-
-          // Determine category based on item type
-          if (item.type === "template") {
-            category = "video-templates";
-            categoryCount.videoTemplates++;
-          } else if (
-            item.type === "picture-template" ||
-            item.type === "picture-folder"
-          ) {
-            category = "pictures";
-            categoryCount.pictures++;
-          } else if (
-            item.type === "video-content" ||
-            item.type === "video-folder"
-          ) {
-            category = "video-content";
-            categoryCount.videoContent++;
-          } else if (
-            item.type === "audio-content" ||
-            item.type === "audio-folder"
-          ) {
-            category = "audio";
-            categoryCount.audio++;
-          }
-
-          // Handle folders
           if (
             item.type === "folder" ||
             item.type === "picture-folder" ||
             item.type === "video-folder" ||
             item.type === "audio-folder"
           ) {
-            allFolders.push({
-              _id: item.folderId || item._id,
-              name: item.title || item.name,
-              itemCount: item.itemCount || 0,
-              category,
-              purchaseDate,
-            });
+            const folderId = item.folderId || item._id;
+            purchasedFolderIds.add(folderId);
+            console.log(
+              `  📁 Found folder in purchase:`,
+              folderId,
+              item.title || item.name,
+            );
+          }
+        });
+
+        // Second pass: process items, excluding those that belong to purchased folders
+        purchase.items.forEach((item: any, itemIdx: number) => {
+          console.log(`\n  Item #${itemIdx + 1}:`, {
+            type: item.type,
+            title: item.title || item.name,
+            _id: item._id,
+            templateId: item.templateId,
+            folderId: item.folderId,
+          });
+
+          let category: CategoryType = "all";
+          let isFolder = false;
+
+          // Determine category and check if it's a folder
+          if (item.type === "template") {
+            category = "video-templates";
+            isFolder = false;
+          } else if (item.type === "picture-template") {
+            category = "pictures";
+            isFolder = false;
+          } else if (item.type === "picture-folder") {
+            category = "pictures";
+            isFolder = true;
+          } else if (item.type === "video-content") {
+            category = "video-content";
+            isFolder = false;
+          } else if (item.type === "video-folder") {
+            category = "video-content";
+            isFolder = true;
+          } else if (item.type === "audio-content") {
+            category = "audio";
+            isFolder = false;
+          } else if (item.type === "audio-folder") {
+            category = "audio";
+            isFolder = true;
+          } else if (item.type === "folder") {
+            // Generic folder - determine category from context
+            isFolder = true;
+          }
+
+          // SKIP individual items if they belong to a folder that was also purchased
+          if (
+            !isFolder &&
+            item.folderId &&
+            purchasedFolderIds.has(item.folderId)
+          ) {
+            console.log(
+              `  ⏭️ SKIPPING - Item belongs to purchased folder:`,
+              item.folderId,
+              item.title || item.name,
+            );
+            return; // Skip this item
+          }
+
+          // Count for stats (only once per item)
+          if (category === "video-templates" && !isFolder) {
+            categoryCount.videoTemplates++;
+          } else if (category === "pictures" && !isFolder) {
+            categoryCount.pictures++;
+          } else if (category === "video-content" && !isFolder) {
+            categoryCount.videoContent++;
+          } else if (category === "audio" && !isFolder) {
+            categoryCount.audio++;
+          }
+
+          // Separate folders and items STRICTLY with deduplication
+          if (isFolder) {
+            const folderId = item.folderId || item._id;
+            // Only add if not already seen
+            if (!seenFolderIds.has(folderId)) {
+              seenFolderIds.add(folderId);
+              allFolders.push({
+                _id: folderId,
+                name: item.title || item.name,
+                itemCount: item.itemCount || 0,
+                category,
+                purchaseDate,
+              });
+              console.log(
+                `  ✓ Added to FOLDERS:`,
+                folderId,
+                item.title || item.name,
+              );
+            } else {
+              console.warn(
+                "  ⚠️ Duplicate folder detected:",
+                folderId,
+                item.title || item.name,
+              );
+            }
           } else {
-            // Handle individual items
-            allItems.push({
-              _id: item.templateId || item._id,
-              title: item.title || item.name,
-              description: item.description,
-              type: item.type,
-              price: item.price,
-              category,
-              qrUrl: item.qrUrl,
-              downloadImageUrl: item.downloadImageUrl,
-              previewImageUrl: item.previewImageUrl,
-              downloadVideoUrl: item.downloadVideoUrl,
-              previewVideoUrl: item.previewVideoUrl,
-              downloadAudioUrl: item.downloadAudioUrl,
-              previewAudioUrl: item.previewAudioUrl,
-              videoUrl: item.videoUrl,
-              thumbnailUrl: item.thumbnailUrl,
-              purchaseDate,
-            });
+            const itemId = item.templateId || item._id;
+            // Only add to items if it's NOT a folder AND not already seen
+            if (!seenItemIds.has(itemId)) {
+              seenItemIds.add(itemId);
+              console.log(
+                `  ✓ Added to ITEMS:`,
+                itemId,
+                item.title || item.name,
+              );
+              allItems.push({
+                _id: itemId,
+                title: item.title || item.name,
+                description: item.description,
+                type: item.type,
+                price: item.price,
+                category,
+                qrUrl: item.qrUrl,
+                downloadImageUrl: item.downloadImageUrl,
+                previewImageUrl: item.previewImageUrl,
+                downloadVideoUrl: item.downloadVideoUrl,
+                previewVideoUrl: item.previewVideoUrl,
+                downloadAudioUrl: item.downloadAudioUrl,
+                previewAudioUrl: item.previewAudioUrl,
+                videoUrl: item.videoUrl,
+                thumbnailUrl: item.thumbnailUrl,
+                purchaseDate,
+              });
+            } else {
+              console.warn(
+                "  ⚠️ Duplicate item detected:",
+                itemId,
+                item.title || item.name,
+              );
+            }
           }
         });
       });
 
-      setItems(allItems);
-      setFolders(allFolders);
+      // Set state with fresh arrays to prevent mutation issues
+      setItems([...allItems]);
+      setFolders([...allFolders]);
       setStats({
         totalItems: allItems.length,
         totalFolders: allFolders.length,
         recentPurchaseDate: mostRecentDate,
         categoryBreakdown: categoryCount,
       });
+      hasLoadedRef.current = true;
+
+      console.log("\n=== FINAL RESULTS ===");
+      console.log("Total ITEMS:", allItems.length);
+      console.log("Total FOLDERS:", allFolders.length);
+      console.log(
+        "Items array:",
+        allItems.map((i) => ({ id: i._id, title: i.title, type: i.type })),
+      );
+      console.log(
+        "Folders array:",
+        allFolders.map((f) => ({
+          id: f._id,
+          name: f.name,
+          category: f.category,
+        })),
+      );
+      console.log("======================\n");
     } catch (error) {
       console.error("Error loading purchases:", error);
       toast.error("Failed to load purchases");
     } finally {
       setLoading(false);
+      isLoadingRef.current = false;
     }
   };
 
@@ -592,7 +715,7 @@ export default function MyPurchases() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {filteredItems.map((item, idx) => (
                         <motion.div
-                          key={item._id}
+                          key={`item-${item._id}-${idx}`}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.5 + idx * 0.05 }}
@@ -735,7 +858,7 @@ export default function MyPurchases() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {filteredFolders.map((folder, idx) => (
                         <motion.div
-                          key={folder._id}
+                          key={`folder-${folder._id}-${idx}`}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.5 + idx * 0.05 }}
