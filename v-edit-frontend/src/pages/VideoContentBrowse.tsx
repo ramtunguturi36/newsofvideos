@@ -348,72 +348,6 @@ export default function VideoContentBrowse() {
                     </div>
                   ))}
                 </div>
-
-                {/* Pagination Controls */}
-                {totalPages > 1 && (
-                  <div className="mt-8 flex items-center justify-center space-x-2">
-                    <Button
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.max(1, prev - 1))
-                      }
-                      disabled={currentPage === 1}
-                      variant="outline"
-                      size="sm"
-                      className="rounded-full"
-                    >
-                      Previous
-                    </Button>
-
-                    <div className="flex items-center space-x-1">
-                      {[...Array(Math.min(5, totalPages))].map((_, idx) => {
-                        let pageNum;
-                        if (totalPages <= 5) {
-                          pageNum = idx + 1;
-                        } else if (currentPage <= 3) {
-                          pageNum = idx + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNum = totalPages - 4 + idx;
-                        } else {
-                          pageNum = currentPage - 2 + idx;
-                        }
-
-                        return (
-                          <Button
-                            key={pageNum}
-                            onClick={() => setCurrentPage(pageNum)}
-                            variant={
-                              currentPage === pageNum ? "default" : "outline"
-                            }
-                            size="sm"
-                            className={`rounded-full w-10 h-10 ${
-                              currentPage === pageNum
-                                ? "bg-gradient-to-r from-green-600 to-teal-600 text-white"
-                                : ""
-                            }`}
-                          >
-                            {pageNum}
-                          </Button>
-                        );
-                      })}
-                    </div>
-
-                    <Button
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                      }
-                      disabled={currentPage === totalPages}
-                      variant="outline"
-                      size="sm"
-                      className="rounded-full"
-                    >
-                      Next
-                    </Button>
-
-                    <span className="text-sm text-slate-600 ml-4">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                  </div>
-                )}
               </div>
             )}
 
@@ -526,6 +460,72 @@ export default function VideoContentBrowse() {
                   </div>
                 ))}
               </div>
+
+              {/* Pagination Controls for Videos */}
+              {totalPages > 1 && (
+                <div className="mt-8 flex items-center justify-center space-x-2">
+                  <Button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(1, prev - 1))
+                    }
+                    disabled={currentPage === 1}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                  >
+                    Previous
+                  </Button>
+
+                  <div className="flex items-center space-x-1">
+                    {[...Array(Math.min(5, totalPages))].map((_, idx) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = idx + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = idx + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + idx;
+                      } else {
+                        pageNum = currentPage - 2 + idx;
+                      }
+
+                      return (
+                        <Button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          variant={
+                            currentPage === pageNum ? "default" : "outline"
+                          }
+                          size="sm"
+                          className={`rounded-full w-10 h-10 ${
+                            currentPage === pageNum
+                              ? "bg-gradient-to-r from-green-600 to-teal-600 text-white"
+                              : ""
+                          }`}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+
+                  <Button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                  >
+                    Next
+                  </Button>
+
+                  <span className="text-sm text-slate-600 ml-4">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
