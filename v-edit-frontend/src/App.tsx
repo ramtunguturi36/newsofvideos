@@ -15,6 +15,9 @@ import PictureTemplatesManager from "./pages/admin/components/PictureTemplatesMa
 import VideoContentManager from "./pages/admin/components/VideoContentManager";
 import AudioContentManager from "./pages/admin/components/AudioContentManager";
 import CouponsManager from "./pages/admin/components/CouponsManager";
+import UsersManager from "./pages/admin/components/UsersManager";
+import AnalyticsDashboard from "./pages/admin/components/AnalyticsDashboard";
+import AdminSettings from "./pages/admin/components/AdminSettings";
 import UserLayout from "./pages/user/UserLayout";
 import UserDashboard from "./pages/user/UserDashboard";
 import Orders from "./pages/user/Orders";
@@ -76,10 +79,6 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 
   return children;
 };
-
-// Admin pages
-const Users = () => <div className="p-6">Users Management</div>;
-const AdminSettings = () => <div className="p-6">Admin Settings</div>;
 
 function App() {
   return (
@@ -155,6 +154,9 @@ function App() {
               <Route path="video-content" element={<VideoContentManager />} />
               <Route path="audio-content" element={<AudioContentManager />} />
               <Route path="coupons" element={<CouponsManager />} />
+              <Route path="users" element={<UsersManager />} />
+              <Route path="analytics" element={<AnalyticsDashboard />} />
+              <Route path="settings" element={<AdminSettings />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />

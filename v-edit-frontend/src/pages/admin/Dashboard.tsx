@@ -1,3 +1,4 @@
+import React from "react";
 import {
   LayoutDashboard,
   Users,
@@ -11,6 +12,8 @@ import {
   Image,
   Video,
   Music,
+  Menu,
+  X,
 } from "lucide-react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -26,6 +29,7 @@ type NavItem = {
 const Dashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
   const navItems: NavItem[] = [
     {
@@ -62,10 +66,19 @@ const Dashboard = () => {
       path: "/admin/coupons",
     },
     {
+      name: "Users",
+      icon: <Users className="h-5 w-5" />,
+      path: "/admin/users",
+    },
+    {
       name: "Analytics",
       icon: <BarChart2 className="h-5 w-5" />,
       path: "/admin/analytics",
-      badge: "24",
+    },
+    {
+      name: "Settings",
+      icon: <Settings className="h-5 w-5" />,
+      path: "/admin/settings",
     },
   ];
 
@@ -82,8 +95,21 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 z-30 w-64 bg-gradient-to-b from-indigo-700 to-indigo-800 text-white transition-transform lg:translate-x-0">
+      <div
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-indigo-700 to-indigo-800 text-white transition-transform duration-300 ease-in-out",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+        )}
+      >
         <div className="flex h-16 items-center justify-between px-6 border-b border-indigo-600">
           <div className="flex items-center space-x-2">
             <div className="h-8 w-8 rounded-md bg-white flex items-center justify-center">
@@ -94,9 +120,15 @@ const Dashboard = () => {
           <span className="text-xs bg-indigo-600 px-2 py-1 rounded-full">
             Admin
           </span>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden text-white hover:bg-indigo-600 p-1 rounded"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => (
             <Link
               key={item.name}
@@ -136,13 +168,19 @@ const Dashboard = () => {
         {/* Top Bar */}
         <header className="sticky top-0 z-20 bg-white border-b border-gray-200">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden text-gray-500 hover:text-gray-700 mr-4"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
             <h1 className="text-xl font-semibold text-gray-900">
               {navItems.find((item) => isActive(item.path))?.name ||
                 "Dashboard"}
             </h1>
 
-            <div className="flex items-center space-x-4">
-              <div className="relative max-w-md w-full">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="relative max-w-md w-full hidden sm:block">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg
                     className="h-5 w-5 text-gray-400"
