@@ -45,6 +45,8 @@ app.use(
         "http://localhost:5173",
         "https://newsofvideos.onrender.com",
         "https://newsofvideos.vercel.app",
+        "https://www.vedithub.in",
+        "https://vedithub.in",
         process.env.FRONTEND_URL,
       ].filter(Boolean); // Remove any undefined values
 
