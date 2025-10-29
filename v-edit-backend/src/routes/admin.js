@@ -480,12 +480,41 @@ router.delete(
     try {
       const result = await Purchase.deleteMany({});
 
+      console.log(
+        `[ADMIN ACTION] All purchases cleared. Deleted count: ${result.deletedCount}`,
+      );
+
       return res.json({
         message: "All purchases cleared successfully",
         deletedCount: result.deletedCount,
       });
     } catch (err) {
       console.error("Error clearing purchases:", err);
+      return res.status(500).json({ message: "Server error" });
+    }
+  },
+);
+
+// Clear all registered users (admin only) - Keep admin accounts safe
+router.delete(
+  "/users/clear-all",
+  authMiddleware,
+  adminMiddleware,
+  async (req, res) => {
+    try {
+      // Delete only users with role="user", keep admin accounts
+      const result = await User.deleteMany({ role: "user" });
+
+      console.log(
+        `[ADMIN ACTION] All users cleared by admin: ${req.user.userId}. Deleted count: ${result.deletedCount}`,
+      );
+
+      return res.json({
+        message: "All registered users cleared successfully",
+        deletedCount: result.deletedCount,
+      });
+    } catch (err) {
+      console.error("Error clearing users:", err);
       return res.status(500).json({ message: "Server error" });
     }
   },
