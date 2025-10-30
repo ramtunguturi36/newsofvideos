@@ -12,7 +12,7 @@ export default function Footer() {
         <div className="py-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Column 1: Company Info */}
           <div>
-            <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <h3 className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
               V EDIT HUB
             </h3>
             <p className="text-sm font-semibold text-purple-300 mb-4">
@@ -49,17 +49,6 @@ export default function Footer() {
                   className="hover:text-purple-400 transition-colors break-all"
                 >
                   vedithubwebsite@gmail.com
-                </a>
-              </li>
-              <li className="flex items-start space-x-2 text-slate-400">
-                <Instagram className="h-4 w-4 flex-shrink-0 mt-0.5 text-purple-400" />
-                <a
-                  href="https://instagram.com/innovatechdeveloperss"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-purple-400 transition-colors"
-                >
-                  @innovatechdeveloperss
                 </a>
               </li>
             </ul>
@@ -101,6 +90,17 @@ export default function Footer() {
                   className="hover:text-purple-400 transition-colors"
                 >
                   6304623705
+                </a>
+              </li>
+              <li className="flex items-start space-x-2 text-slate-400">
+                <Instagram className="h-4 w-4 flex-shrink-0 mt-0.5 text-purple-400" />
+                <a
+                  href="https://instagram.com/innovatechdeveloperss"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-purple-400 transition-colors"
+                >
+                  @innovatechdeveloperss
                 </a>
               </li>
             </ul>
