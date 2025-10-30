@@ -12,7 +12,7 @@ export default function Footer() {
         <div className="py-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Column 1: Company Info */}
           <div>
-            <h3 className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <h3 className="text-4xl font-extrabold mb-3 bg-gradient-to-r from-purple-400 via-pink-400 to-purple-500 bg-clip-text text-transparent tracking-wide">
               V EDIT HUB
             </h3>
             <p className="text-sm font-semibold text-purple-300 mb-4">
@@ -21,8 +21,7 @@ export default function Footer() {
             <p className="text-slate-400 mb-4 text-sm leading-relaxed">
               Stop searching endlessly for the perfect asset. We deliver
               thousands of pro-grade video and thumbnail resources. Instantly
-              download everything you need to save hours of work.{" "}
-              <span className="text-purple-300 font-semibold">V EDIT HUB</span>:
+              download everything you need to save hours of work. V EDIT HUB:
               Edit Smarter. Create Faster. Get your assets now.
             </p>
           </div>
