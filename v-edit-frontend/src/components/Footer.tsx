@@ -21,19 +21,10 @@ export default function Footer() {
             <p className="text-slate-400 mb-4 text-sm leading-relaxed">
               Stop searching endlessly for the perfect asset. We deliver
               thousands of pro-grade video and thumbnail resources. Instantly
-              download everything you need to save hours of work.
+              download everything you need to save hours of work.{" "}
+              <span className="text-purple-300 font-semibold">V EDIT HUB</span>:
+              Edit Smarter. Create Faster. Get your assets now.
             </p>
-            <ul className="space-y-2 text-sm">
-              <li className="flex items-start space-x-2 text-slate-400">
-                <Mail className="h-4 w-4 flex-shrink-0 mt-0.5 text-purple-400" />
-                <a
-                  href="mailto:vedithubwebsite@gmail.com"
-                  className="hover:text-purple-400 transition-colors break-all"
-                >
-                  vedithubwebsite@gmail.com
-                </a>
-              </li>
-            </ul>
           </div>
 
           {/* Column 2: Quick Links */}
@@ -50,6 +41,15 @@ export default function Footer() {
                   <span className="mr-2">→</span>
                   Contact Us
                 </Link>
+              </li>
+              <li className="flex items-start space-x-2 text-slate-400">
+                <Mail className="h-4 w-4 flex-shrink-0 mt-0.5 text-purple-400" />
+                <a
+                  href="mailto:vedithubwebsite@gmail.com"
+                  className="hover:text-purple-400 transition-colors break-all"
+                >
+                  vedithubwebsite@gmail.com
+                </a>
               </li>
               <li className="flex items-start space-x-2 text-slate-400">
                 <Instagram className="h-4 w-4 flex-shrink-0 mt-0.5 text-purple-400" />
