@@ -50,6 +50,17 @@ export default function Footer() {
                   vedithubwebsite@gmail.com
                 </a>
               </li>
+              <li className="flex items-start space-x-2 text-slate-400">
+                <Instagram className="h-4 w-4 flex-shrink-0 mt-0.5 text-purple-400" />
+                <a
+                  href="https://www.instagram.com/vedithub?igsh=MW01ejEzeTQ3aWwzdw=="
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-purple-400 transition-colors"
+                >
+                  @vedithub
+                </a>
+              </li>
             </ul>
           </div>
 
