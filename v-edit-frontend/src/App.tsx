@@ -85,7 +85,15 @@ function App() {
     <Router>
       <AuthProvider>
         <CartProvider>
-          <Toaster position="top-right" richColors />
+          <Toaster
+            position="top-right"
+            richColors
+            toastOptions={{
+              style: {
+                marginTop: "80px",
+              },
+            }}
+          />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/folders" element={<VideoTemplatesBrowse />} />

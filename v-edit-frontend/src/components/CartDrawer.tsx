@@ -126,6 +126,9 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
         },
         handler: async (response: any) => {
           try {
+            // Show loading state
+            setLoading(true);
+
             const verificationData = {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
@@ -143,14 +146,17 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
             if (verifyRes.data.purchaseId) {
               clear();
               onClose();
+              // Keep loading state while navigating
               navigate(
                 `/payment-success?purchaseId=${verifyRes.data.purchaseId}`,
               );
             } else {
+              setLoading(false);
               alert("Payment verification failed. Please contact support.");
             }
           } catch (err) {
             console.error("Payment verification failed:", err);
+            setLoading(false);
             alert("Payment verification failed. Please contact support.");
           }
         },
@@ -200,6 +206,23 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity"
         onClick={onClose}
       ></div>
+
+      {/* Loading Overlay */}
+      {loading && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[60] flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center space-y-4">
+            <Loader2 className="h-16 w-16 animate-spin text-purple-600" />
+            <div className="text-center">
+              <h3 className="text-xl font-bold text-slate-900 mb-2">
+                Processing Payment
+              </h3>
+              <p className="text-slate-600">
+                Please wait while we verify your payment...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Drawer */}
       <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">

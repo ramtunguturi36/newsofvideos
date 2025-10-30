@@ -315,7 +315,7 @@ export default function MyPurchases() {
               allFolders.push({
                 _id: folderId,
                 name: item.title || item.name,
-                itemCount: item.itemCount || 0,
+                itemCount: item.itemCount || item.templates?.length || 0,
                 category,
                 purchaseDate,
               });
@@ -495,7 +495,16 @@ export default function MyPurchases() {
         `/purchases/folder-contents/${folder._id}?type=${folderType}`,
       );
 
-      setFolderContents(response.data.items || []);
+      const items = response.data.items || [];
+      setFolderContents(items);
+
+      // Update the folder's itemCount in the folders state
+      setFolders((prevFolders) =>
+        prevFolders.map((f) =>
+          f._id === folder._id ? { ...f, itemCount: items.length } : f,
+        ),
+      );
+
       setLoadingContents(false);
     } catch (error) {
       console.error("Error loading folder contents:", error);
@@ -1091,7 +1100,11 @@ export default function MyPurchases() {
                             {folder.name}
                           </h3>
                           <div className="flex items-center justify-between text-sm text-slate-600 mb-4">
-                            <span>{folder.itemCount} items</span>
+                            <span>
+                              {folder.itemCount > 0
+                                ? `${folder.itemCount} items`
+                                : "View items"}
+                            </span>
                             {folder.purchaseDate && (
                               <span className="flex items-center">
                                 <Calendar className="h-3 w-3 mr-1" />
