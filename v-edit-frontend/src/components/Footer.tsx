@@ -1,15 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import {
-  Facebook,
-  Twitter,
-  Instagram,
-  Youtube,
-  Mail,
-  Phone,
-  MapPin,
-  Heart,
-} from "lucide-react";
+import { Mail, Phone, Instagram, Globe, ExternalLink } from "lucide-react";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -17,160 +8,176 @@ export default function Footer() {
   return (
     <footer className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Main Footer Content */}
+        {/* Main Footer Content - 4 Column Layout */}
         <div className="py-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Company Info */}
+          {/* Column 1: Company Info */}
           <div>
-            <h3 className="text-xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-              V-Edit
+            <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              V EDIT HUB
             </h3>
-            <p className="text-slate-400 mb-4 text-sm">
-              Your one-stop destination for premium video templates, pictures,
-              video content, and audio collections.
+            <p className="text-sm font-semibold text-purple-300 mb-4">
+              Edit Smarter. Create Faster.
             </p>
-            <div className="flex space-x-3">
+            <p className="text-slate-400 mb-4 text-sm leading-relaxed">
+              Stop searching endlessly for the perfect asset. We deliver
+              thousands of pro-grade video and thumbnail resources. Instantly
+              download everything you need to save hours of work.
+            </p>
+            <div className="flex items-start space-x-2 text-slate-400 text-sm">
+              <Mail className="h-4 w-4 flex-shrink-0 mt-0.5 text-purple-400" />
               <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="h-9 w-9 rounded-full bg-slate-700 hover:bg-purple-600 flex items-center justify-center transition-colors duration-300"
+                href="mailto:vedithubwebsite@gmail.com"
+                className="hover:text-purple-400 transition-colors break-all"
               >
-                <Facebook className="h-4 w-4" />
-              </a>
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="h-9 w-9 rounded-full bg-slate-700 hover:bg-blue-500 flex items-center justify-center transition-colors duration-300"
-              >
-                <Twitter className="h-4 w-4" />
-              </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="h-9 w-9 rounded-full bg-slate-700 hover:bg-pink-600 flex items-center justify-center transition-colors duration-300"
-              >
-                <Instagram className="h-4 w-4" />
-              </a>
-              <a
-                href="https://youtube.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="h-9 w-9 rounded-full bg-slate-700 hover:bg-red-600 flex items-center justify-center transition-colors duration-300"
-              >
-                <Youtube className="h-4 w-4" />
+                vedithubwebsite@gmail.com
               </a>
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Column 2: Quick Links */}
           <div>
-            <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
+            <h4 className="text-lg font-semibold mb-4 text-purple-300">
+              Quick Links
+            </h4>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
                   to="/folders"
-                  className="text-slate-400 hover:text-purple-400 transition-colors"
+                  className="text-slate-400 hover:text-purple-400 transition-colors flex items-center"
                 >
+                  <span className="mr-2">→</span>
                   Video Templates
                 </Link>
               </li>
               <li>
                 <Link
                   to="/picture-templates"
-                  className="text-slate-400 hover:text-purple-400 transition-colors"
+                  className="text-slate-400 hover:text-purple-400 transition-colors flex items-center"
                 >
+                  <span className="mr-2">→</span>
                   Pictures
                 </Link>
               </li>
               <li>
                 <Link
                   to="/video-content"
-                  className="text-slate-400 hover:text-purple-400 transition-colors"
+                  className="text-slate-400 hover:text-purple-400 transition-colors flex items-center"
                 >
+                  <span className="mr-2">→</span>
                   Video Content
                 </Link>
               </li>
               <li>
                 <Link
                   to="/audio-content"
-                  className="text-slate-400 hover:text-purple-400 transition-colors"
+                  className="text-slate-400 hover:text-purple-400 transition-colors flex items-center"
                 >
+                  <span className="mr-2">→</span>
                   Audio Content
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/contact"
+                  className="text-slate-400 hover:text-purple-400 transition-colors flex items-center"
+                >
+                  <span className="mr-2">→</span>
+                  Contact Us
+                </Link>
+              </li>
             </ul>
           </div>
 
-          {/* Support */}
+          {/* Column 3: Developed By */}
           <div>
-            <h4 className="text-lg font-semibold mb-4">Support</h4>
+            <h4 className="text-lg font-semibold mb-4 text-purple-300">
+              Developed By
+            </h4>
+            <p className="text-white font-semibold mb-3">
+              Innovatech Developers
+            </p>
             <ul className="space-y-2 text-sm">
-              <li>
-                <Link
-                  to="/help"
-                  className="text-slate-400 hover:text-purple-400 transition-colors"
+              <li className="flex items-start space-x-2 text-slate-400">
+                <Globe className="h-4 w-4 flex-shrink-0 mt-0.5 text-purple-400" />
+                <a
+                  href="https://innovatech-developers.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-purple-400 transition-colors break-all"
                 >
-                  Help Center
-                </Link>
+                  innovatech-developers.vercel.app
+                </a>
               </li>
-              <li>
-                <Link
-                  to="/faq"
-                  className="text-slate-400 hover:text-purple-400 transition-colors"
+              <li className="flex items-start space-x-2 text-slate-400">
+                <Mail className="h-4 w-4 flex-shrink-0 mt-0.5 text-purple-400" />
+                <a
+                  href="mailto:innovatechdeveloperss@gmail.com"
+                  className="hover:text-purple-400 transition-colors break-all"
                 >
-                  FAQs
-                </Link>
+                  innovatechdeveloperss@gmail.com
+                </a>
               </li>
-              <li>
-                <Link
-                  to="/terms"
-                  className="text-slate-400 hover:text-purple-400 transition-colors"
+              <li className="flex items-start space-x-2 text-slate-400">
+                <Phone className="h-4 w-4 flex-shrink-0 mt-0.5 text-purple-400" />
+                <a
+                  href="tel:6304623705"
+                  className="hover:text-purple-400 transition-colors"
                 >
-                  Terms of Service
-                </Link>
+                  6304623705
+                </a>
               </li>
-              <li>
-                <Link
-                  to="/privacy"
-                  className="text-slate-400 hover:text-purple-400 transition-colors"
+              <li className="flex items-start space-x-2 text-slate-400">
+                <Instagram className="h-4 w-4 flex-shrink-0 mt-0.5 text-purple-400" />
+                <a
+                  href="https://instagram.com/innovatechdeveloperss"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-purple-400 transition-colors"
                 >
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/refund"
-                  className="text-slate-400 hover:text-purple-400 transition-colors"
-                >
-                  Refund Policy
-                </Link>
+                  @innovatechdeveloperss
+                </a>
               </li>
             </ul>
           </div>
 
-          {/* Contact Info */}
+          {/* Column 4: Developer Projects */}
           <div>
-            <h4 className="text-lg font-semibold mb-4">Contact Us</h4>
+            <h4 className="text-lg font-semibold mb-4 text-purple-300">
+              Our Projects
+            </h4>
             <ul className="space-y-3 text-sm">
-              <li className="flex items-start space-x-3 text-slate-400">
-                <Mail className="h-5 w-5 flex-shrink-0 mt-0.5 text-purple-400" />
-                <span>support@v-edit.com</span>
+              <li>
+                <a
+                  href="https://www.padmalayahighschool.in"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start space-x-2 text-slate-400 hover:text-purple-400 transition-colors group"
+                >
+                  <ExternalLink className="h-4 w-4 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                  <span>PadmalayaHighSchool.in</span>
+                </a>
               </li>
-              <li className="flex items-start space-x-3 text-slate-400">
-                <Phone className="h-5 w-5 flex-shrink-0 mt-0.5 text-purple-400" />
-                <span>+91 1234567890</span>
+              <li>
+                <a
+                  href="https://innovatech-developers.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start space-x-2 text-slate-400 hover:text-purple-400 transition-colors group"
+                >
+                  <ExternalLink className="h-4 w-4 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                  <span>Innovatech Developers</span>
+                </a>
               </li>
-              <li className="flex items-start space-x-3 text-slate-400">
-                <MapPin className="h-5 w-5 flex-shrink-0 mt-0.5 text-purple-400" />
-                <span>
-                  123 Business Street
-                  <br />
-                  City, State 12345
-                  <br />
-                  India
-                </span>
+              <li>
+                <a
+                  href="https://www.vedithub.in"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start space-x-2 text-slate-400 hover:text-purple-400 transition-colors group"
+                >
+                  <ExternalLink className="h-4 w-4 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                  <span>VeditHub.in</span>
+                </a>
               </li>
             </ul>
           </div>
@@ -180,12 +187,18 @@ export default function Footer() {
         <div className="border-t border-slate-700 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-sm text-slate-400">
-              © {currentYear} V-Edit. All rights reserved.
+              © {currentYear} V EDIT HUB. All rights reserved.
             </div>
-            <div className="flex items-center space-x-1 text-sm text-slate-400">
-              <span>Made with</span>
-              <Heart className="h-4 w-4 text-red-500 fill-current" />
-              <span>in India</span>
+            <div className="text-sm text-slate-400">
+              Developed by{" "}
+              <a
+                href="https://innovatech-developers.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-400 hover:text-purple-300 transition-colors font-semibold"
+              >
+                Innovatech Developers
+              </a>
             </div>
           </div>
         </div>
