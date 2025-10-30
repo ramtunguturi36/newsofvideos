@@ -23,15 +23,17 @@ export default function Footer() {
               thousands of pro-grade video and thumbnail resources. Instantly
               download everything you need to save hours of work.
             </p>
-            <div className="flex items-start space-x-2 text-slate-400 text-sm">
-              <Mail className="h-4 w-4 flex-shrink-0 mt-0.5 text-purple-400" />
-              <a
-                href="mailto:vedithubwebsite@gmail.com"
-                className="hover:text-purple-400 transition-colors break-all"
-              >
-                vedithubwebsite@gmail.com
-              </a>
-            </div>
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-start space-x-2 text-slate-400">
+                <Mail className="h-4 w-4 flex-shrink-0 mt-0.5 text-purple-400" />
+                <a
+                  href="mailto:vedithubwebsite@gmail.com"
+                  className="hover:text-purple-400 transition-colors break-all"
+                >
+                  vedithubwebsite@gmail.com
+                </a>
+              </li>
+            </ul>
           </div>
 
           {/* Column 2: Quick Links */}
@@ -39,43 +41,7 @@ export default function Footer() {
             <h4 className="text-lg font-semibold mb-4 text-purple-300">
               Quick Links
             </h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link
-                  to="/folders"
-                  className="text-slate-400 hover:text-purple-400 transition-colors flex items-center"
-                >
-                  <span className="mr-2">→</span>
-                  Video Templates
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/picture-templates"
-                  className="text-slate-400 hover:text-purple-400 transition-colors flex items-center"
-                >
-                  <span className="mr-2">→</span>
-                  Pictures
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/video-content"
-                  className="text-slate-400 hover:text-purple-400 transition-colors flex items-center"
-                >
-                  <span className="mr-2">→</span>
-                  Video Content
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/audio-content"
-                  className="text-slate-400 hover:text-purple-400 transition-colors flex items-center"
-                >
-                  <span className="mr-2">→</span>
-                  Audio Content
-                </Link>
-              </li>
+            <ul className="space-y-3 text-sm">
               <li>
                 <Link
                   to="/contact"
@@ -84,6 +50,17 @@ export default function Footer() {
                   <span className="mr-2">→</span>
                   Contact Us
                 </Link>
+              </li>
+              <li className="flex items-start space-x-2 text-slate-400">
+                <Instagram className="h-4 w-4 flex-shrink-0 mt-0.5 text-purple-400" />
+                <a
+                  href="https://instagram.com/innovatechdeveloperss"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-purple-400 transition-colors"
+                >
+                  @innovatechdeveloperss
+                </a>
               </li>
             </ul>
           </div>
@@ -126,24 +103,13 @@ export default function Footer() {
                   6304623705
                 </a>
               </li>
-              <li className="flex items-start space-x-2 text-slate-400">
-                <Instagram className="h-4 w-4 flex-shrink-0 mt-0.5 text-purple-400" />
-                <a
-                  href="https://instagram.com/innovatechdeveloperss"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-purple-400 transition-colors"
-                >
-                  @innovatechdeveloperss
-                </a>
-              </li>
             </ul>
           </div>
 
           {/* Column 4: Developer Projects */}
           <div>
             <h4 className="text-lg font-semibold mb-4 text-purple-300">
-              Our Projects
+              Developer Projects
             </h4>
             <ul className="space-y-3 text-sm">
               <li>
