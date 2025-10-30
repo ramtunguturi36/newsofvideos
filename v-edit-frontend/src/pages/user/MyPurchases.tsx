@@ -121,7 +121,11 @@ export default function MyPurchases() {
       audio: 0,
     },
   });
-  const [downloading, setDownloading] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState<Record<string, boolean>>({});
+  const [downloadingAll, setDownloadingAll] = useState<string | null>(null);
+  const [downloadingFolderItem, setDownloadingFolderItem] = useState<
+    Record<string, boolean>
+  >({});
   const [viewingFolder, setViewingFolder] = useState<PurchaseFolder | null>(
     null,
   );
@@ -403,10 +407,10 @@ export default function MyPurchases() {
   };
 
   const handleDownload = async (item: PurchaseItem) => {
-    if (downloading) return;
+    if (downloading[item._id]) return;
 
     try {
-      setDownloading(item._id);
+      setDownloading((prev) => ({ ...prev, [item._id]: true }));
       toast.info("Preparing download...");
 
       let downloadUrl = "";
@@ -433,6 +437,7 @@ export default function MyPurchases() {
 
       if (!downloadUrl) {
         toast.error("Download URL not available");
+        setDownloading((prev) => ({ ...prev, [item._id]: false }));
         return;
       }
 
@@ -468,7 +473,7 @@ export default function MyPurchases() {
       console.error("Download error:", error);
       toast.error("Download failed");
     } finally {
-      setDownloading(null);
+      setDownloading((prev) => ({ ...prev, [item._id]: false }));
     }
   };
 
@@ -500,8 +505,95 @@ export default function MyPurchases() {
     }
   };
 
-  const handleDownloadFolderItem = async (item: FolderContentItem) => {
+  const handleDownloadAllIndividually = async () => {
+    if (!viewingFolder || downloadingAll === viewingFolder._id) return;
+
     try {
+      setDownloadingAll(viewingFolder._id);
+
+      if (folderContents.length === 0) {
+        toast.error("No items found in folder");
+        return;
+      }
+
+      toast.info(`Downloading ${folderContents.length} files individually...`, {
+        duration: 3000,
+      });
+
+      // Download each file with delay
+      for (let i = 0; i < folderContents.length; i++) {
+        const item = folderContents[i];
+        const downloadUrl =
+          item.downloadImageUrl ||
+          item.downloadVideoUrl ||
+          item.downloadAudioUrl ||
+          item.videoUrl ||
+          item.qrUrl;
+
+        if (downloadUrl) {
+          // Determine file extension
+          const fileExt = downloadUrl.includes(".png")
+            ? "png"
+            : downloadUrl.includes(".jpg") || downloadUrl.includes(".jpeg")
+              ? "jpg"
+              : downloadUrl.includes(".mp4")
+                ? "mp4"
+                : downloadUrl.includes(".mp3")
+                  ? "mp3"
+                  : downloadUrl.includes(".wav")
+                    ? "wav"
+                    : "file";
+
+          const fileName = `${i + 1}-${item.title.replace(/[^a-zA-Z0-9]/g, "-")}.${fileExt}`;
+
+          // Use backend download proxy
+          const apiBaseUrl =
+            import.meta.env.VITE_API_URL || "http://localhost:5000";
+          const token = localStorage.getItem("token");
+          const proxyUrl = `${apiBaseUrl}/api/download-proxy?url=${encodeURIComponent(downloadUrl)}&filename=${encodeURIComponent(fileName)}`;
+
+          const response = await fetch(proxyUrl, {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error("Download failed");
+          }
+
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+
+          // Delay between downloads to avoid browser blocking
+          if (i < folderContents.length - 1) {
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
+        }
+      }
+
+      toast.success(`Successfully downloaded ${folderContents.length} files!`);
+    } catch (error) {
+      console.error("Error downloading all files:", error);
+      toast.error("Failed to download all files");
+    } finally {
+      setDownloadingAll(null);
+    }
+  };
+
+  const handleDownloadFolderItem = async (item: FolderContentItem) => {
+    if (downloadingFolderItem[item._id]) return;
+
+    try {
+      setDownloadingFolderItem((prev) => ({ ...prev, [item._id]: true }));
       const downloadUrl =
         item.downloadImageUrl ||
         item.downloadVideoUrl ||
@@ -511,6 +603,7 @@ export default function MyPurchases() {
 
       if (!downloadUrl) {
         toast.error("No download URL available");
+        setDownloadingFolderItem((prev) => ({ ...prev, [item._id]: false }));
         return;
       }
 
@@ -560,8 +653,10 @@ export default function MyPurchases() {
 
       toast.success("Download started!");
     } catch (error) {
-      console.error("Error downloading item:", error);
-      toast.error("Failed to download item");
+      console.error("Error downloading folder item:", error);
+      toast.error("Failed to download");
+    } finally {
+      setDownloadingFolderItem((prev) => ({ ...prev, [item._id]: false }));
     }
   };
 
@@ -921,10 +1016,10 @@ export default function MyPurchases() {
                             <div className="flex gap-2">
                               <Button
                                 onClick={() => handleDownload(item)}
-                                disabled={downloading === item._id}
+                                disabled={downloading[item._id]}
                                 className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl"
                               >
-                                {downloading === item._id ? (
+                                {downloading[item._id] ? (
                                   <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
                                   <>
@@ -1031,8 +1126,28 @@ export default function MyPurchases() {
       >
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-slate-900">
-              {viewingFolder?.name} - Contents
+            <DialogTitle className="text-2xl font-bold text-slate-900 flex items-center justify-between">
+              <span>{viewingFolder?.name} - Contents</span>
+              {viewingFolder && (
+                <Button
+                  onClick={handleDownloadAllIndividually}
+                  disabled={downloadingAll === viewingFolder._id}
+                  variant="outline"
+                  className="border-2 border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg text-sm py-2 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {downloadingAll === viewingFolder._id ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      Downloading...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-1" />
+                      Download All Files
+                    </>
+                  )}
+                </Button>
+              )}
             </DialogTitle>
           </DialogHeader>
 
@@ -1156,10 +1271,17 @@ export default function MyPurchases() {
                     {/* Download Button */}
                     <Button
                       onClick={() => handleDownloadFolderItem(item)}
-                      className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg text-sm py-2"
+                      disabled={downloadingFolderItem[item._id]}
+                      className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg text-sm py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
+                      {downloadingFolderItem[item._id] ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </>
+                      )}
                     </Button>
                   </div>
                 ))}
