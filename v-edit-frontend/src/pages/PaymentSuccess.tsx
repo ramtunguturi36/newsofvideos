@@ -84,8 +84,11 @@ export default function PaymentSuccess() {
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [folderItems, setFolderItems] = useState<FolderItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [downloading, setDownloading] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState<Record<string, boolean>>({});
   const [downloadingAll, setDownloadingAll] = useState<string | null>(null);
+  const [downloadingFolderItem, setDownloadingFolderItem] = useState<
+    Record<string, boolean>
+  >({});
   const [viewingFolder, setViewingFolder] = useState<PurchaseItem | null>(null);
   const [folderContents, setFolderContents] = useState<ContentItem[]>([]);
   const [loadingContents, setLoadingContents] = useState(false);
@@ -452,7 +455,10 @@ export default function PaymentSuccess() {
   };
 
   const handleDownloadFolderItem = async (item: ContentItem) => {
+    if (downloadingFolderItem[item._id]) return;
+
     try {
+      setDownloadingFolderItem((prev) => ({ ...prev, [item._id]: true }));
       const downloadUrl =
         item.downloadImageUrl ||
         item.downloadVideoUrl ||
@@ -489,14 +495,16 @@ export default function PaymentSuccess() {
     } catch (error) {
       console.error("Error downloading item:", error);
       toast.error("Failed to download item");
+    } finally {
+      setDownloadingFolderItem((prev) => ({ ...prev, [item._id]: false }));
     }
   };
 
   const handleDownloadItem = async (item: PurchaseItem) => {
-    if (downloading) return;
+    if (downloading[item.id]) return;
 
     try {
-      setDownloading(item.id);
+      setDownloading((prev) => ({ ...prev, [item.id]: true }));
       toast.info("Preparing download...");
 
       let downloadUrl = "";
@@ -519,7 +527,7 @@ export default function PaymentSuccess() {
 
       if (!downloadUrl) {
         toast.error("Download URL not available");
-        setDownloading(null);
+        setDownloading((prev) => ({ ...prev, [item.id]: false }));
         return;
       }
 
@@ -556,7 +564,7 @@ export default function PaymentSuccess() {
       console.error("Download error:", error);
       toast.error("Failed to download. Please try again.");
     } finally {
-      setDownloading(null);
+      setDownloading((prev) => ({ ...prev, [item.id]: false }));
     }
   };
 
@@ -828,10 +836,10 @@ export default function PaymentSuccess() {
                   <div className="flex gap-2">
                     <Button
                       onClick={() => handleDownloadItem(item)}
-                      disabled={downloading === item.id}
+                      disabled={downloading[item.id]}
                       className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg text-sm py-2"
                     >
-                      {downloading === item.id ? (
+                      {downloading[item.id] ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
                         <>
@@ -864,33 +872,11 @@ export default function PaymentSuccess() {
                   <div className="flex flex-col gap-2">
                     <Button
                       onClick={() => handleOpenFolder(item)}
-                      disabled={downloadingAll === item.id}
-                      className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg text-sm py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg text-sm py-2"
                     >
                       <FolderOpen className="h-4 w-4 mr-1" />
                       View Contents
                     </Button>
-                    {/* Download All Individually button */}
-                    {item.type !== "folder" && (
-                      <Button
-                        onClick={() => handleDownloadAllIndividually(item)}
-                        disabled={downloadingAll === item.id}
-                        variant="outline"
-                        className="w-full border-2 border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg text-sm py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {downloadingAll === item.id ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                            Downloading...
-                          </>
-                        ) : (
-                          <>
-                            <Download className="h-4 w-4 mr-1" />
-                            Download All Files
-                          </>
-                        )}
-                      </Button>
-                    )}
                   </div>
                 )}
               </div>
@@ -906,8 +892,28 @@ export default function PaymentSuccess() {
       >
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-slate-900">
-              {viewingFolder?.title} - Contents
+            <DialogTitle className="text-2xl font-bold text-slate-900 flex items-center justify-between">
+              <span>{viewingFolder?.title} - Contents</span>
+              {viewingFolder && viewingFolder.type !== "folder" && (
+                <Button
+                  onClick={() => handleDownloadAllIndividually(viewingFolder)}
+                  disabled={downloadingAll === viewingFolder.id}
+                  variant="outline"
+                  className="border-2 border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg text-sm py-2 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {downloadingAll === viewingFolder.id ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      Downloading...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-1" />
+                      Download All Files
+                    </>
+                  )}
+                </Button>
+              )}
             </DialogTitle>
           </DialogHeader>
 
@@ -1031,10 +1037,17 @@ export default function PaymentSuccess() {
                     {/* Download Button */}
                     <Button
                       onClick={() => handleDownloadFolderItem(item)}
-                      className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg text-sm py-2"
+                      disabled={downloadingFolderItem[item._id]}
+                      className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg text-sm py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
+                      {downloadingFolderItem[item._id] ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </>
+                      )}
                     </Button>
                   </div>
                 ))}
