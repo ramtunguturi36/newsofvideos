@@ -500,11 +500,12 @@ export default function PaymentSuccess() {
     }
   };
 
-  const handleDownloadItem = async (item: PurchaseItem) => {
-    if (downloading[item.id]) return;
+  const handleDownloadItem = async (item: PurchaseItem, index: number) => {
+    const downloadKey = `${item.id}-${index}`;
+    if (downloading[downloadKey]) return;
 
     try {
-      setDownloading((prev) => ({ ...prev, [item.id]: true }));
+      setDownloading((prev) => ({ ...prev, [downloadKey]: true }));
       toast.info("Preparing download...");
 
       let downloadUrl = "";
@@ -527,7 +528,7 @@ export default function PaymentSuccess() {
 
       if (!downloadUrl) {
         toast.error("Download URL not available");
-        setDownloading((prev) => ({ ...prev, [item.id]: false }));
+        setDownloading((prev) => ({ ...prev, [downloadKey]: false }));
         return;
       }
 
@@ -564,7 +565,7 @@ export default function PaymentSuccess() {
       console.error("Download error:", error);
       toast.error("Failed to download. Please try again.");
     } finally {
-      setDownloading((prev) => ({ ...prev, [item.id]: false }));
+      setDownloading((prev) => ({ ...prev, [downloadKey]: false }));
     }
   };
 
@@ -835,11 +836,11 @@ export default function PaymentSuccess() {
                 {!item.type.includes("folder") && (
                   <div className="flex gap-2">
                     <Button
-                      onClick={() => handleDownloadItem(item)}
-                      disabled={downloading[item.id]}
+                      onClick={() => handleDownloadItem(item, idx)}
+                      disabled={downloading[`${item.id}-${idx}`]}
                       className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg text-sm py-2"
                     >
-                      {downloading[item.id] ? (
+                      {downloading[`${item.id}-${idx}`] ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
                         <>
