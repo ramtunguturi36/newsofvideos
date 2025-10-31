@@ -41,6 +41,33 @@ export default function Footer() {
                   Contact Us
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/privacy-policy"
+                  className="text-slate-400 hover:text-purple-400 transition-colors flex items-center"
+                >
+                  <span className="mr-2">→</span>
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/terms"
+                  className="text-slate-400 hover:text-purple-400 transition-colors flex items-center"
+                >
+                  <span className="mr-2">→</span>
+                  Terms & Conditions
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/refund-policy"
+                  className="text-slate-400 hover:text-purple-400 transition-colors flex items-center"
+                >
+                  <span className="mr-2">→</span>
+                  Refund & Cancellation
+                </Link>
+              </li>
               <li className="flex items-start space-x-2 text-slate-400">
                 <Mail className="h-4 w-4 flex-shrink-0 mt-0.5 text-purple-400" />
                 <a

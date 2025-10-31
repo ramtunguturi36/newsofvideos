@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Mail, Phone, MapPin, Clock, Send, CheckCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Mail, Phone, MapPin, Clock, Send, CheckCircle } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Contact() {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -22,19 +22,21 @@ export default function Contact() {
     setIsSubmitting(true);
 
     // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     setIsSubmitting(false);
     setIsSubmitted(true);
-    toast.success('Message sent successfully! We\'ll get back to you soon.');
-    
+    toast.success("Message sent successfully! We'll get back to you soon.");
+
     // Reset form
-    setFormData({ name: '', email: '', subject: '', message: '' });
+    setFormData({ name: "", email: "", subject: "", message: "" });
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   if (isSubmitted) {
@@ -43,11 +45,14 @@ export default function Contact() {
         <Card className="w-full max-w-md bg-white/10 backdrop-blur-lg border-white/20 shadow-xl">
           <CardContent className="p-8 text-center">
             <CheckCircle className="h-16 w-16 text-green-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">Message Sent!</h2>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Message Sent!
+            </h2>
             <p className="text-white/70 mb-6">
-              Thank you for contacting us. We'll get back to you within 24 hours.
+              Thank you for contacting us. We'll get back to you within 24
+              hours.
             </p>
-            <Button 
+            <Button
               onClick={() => setIsSubmitted(false)}
               className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
             >
@@ -67,7 +72,8 @@ export default function Contact() {
             Get in Touch
           </h1>
           <p className="text-xl text-white/70 max-w-2xl mx-auto">
-            Have questions or need support? We're here to help you with any inquiries about our video templates.
+            Have questions or need support? We're here to help you with any
+            inquiries about our digital creative assets.
           </p>
         </div>
 
@@ -76,7 +82,9 @@ export default function Contact() {
           <div className="space-y-8">
             <Card className="bg-white/10 backdrop-blur-lg border-white/20 shadow-xl">
               <CardHeader>
-                <CardTitle className="text-2xl text-white">Contact Information</CardTitle>
+                <CardTitle className="text-2xl text-white">
+                  Contact Information
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-start space-x-4">
@@ -85,8 +93,10 @@ export default function Contact() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">Email</h3>
-                    <p className="text-white/70">support@vedit.com</p>
-                    <p className="text-sm text-white/50">We'll respond within 24 hours</p>
+                    <p className="text-white/70">vedithubwebsite@gmail.com</p>
+                    <p className="text-sm text-white/50">
+                      We'll respond within 24 hours
+                    </p>
                   </div>
                 </div>
 
@@ -96,7 +106,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">Phone</h3>
-                    <p className="text-white/70">+91 98765 43210</p>
+                    <p className="text-white/70">Contact via Email</p>
                     <p className="text-sm text-white/50">Mon-Fri 9AM-6PM IST</p>
                   </div>
                 </div>
@@ -106,9 +116,11 @@ export default function Contact() {
                     <MapPin className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Office</h3>
-                    <p className="text-gray-600">123 Tech Street, Mumbai, India</p>
-                    <p className="text-sm text-gray-500">Visit us anytime</p>
+                    <h3 className="font-semibold text-white">Website</h3>
+                    <p className="text-white/70">www.vedithub.in</p>
+                    <p className="text-sm text-white/50">
+                      Your Digital Creative Hub
+                    </p>
                   </div>
                 </div>
 
@@ -117,36 +129,60 @@ export default function Contact() {
                     <Clock className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Business Hours</h3>
-                    <p className="text-gray-600">Monday - Friday: 9:00 AM - 6:00 PM</p>
-                    <p className="text-gray-600">Saturday: 10:00 AM - 4:00 PM</p>
-                    <p className="text-sm text-gray-500">Sunday: Closed</p>
+                    <h3 className="font-semibold text-white">Support Hours</h3>
+                    <p className="text-white/70">24/7 Email Support</p>
+                    <p className="text-white/70">Response within 24-48 hours</p>
+                    <p className="text-sm text-white/50">All days available</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-white/10 backdrop-blur-lg border-white/20 shadow-xl">
               <CardHeader>
-                <CardTitle className="text-xl">Frequently Asked Questions</CardTitle>
+                <CardTitle className="text-xl text-white">
+                  Frequently Asked Questions
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">How do I download my purchased templates?</h4>
-                  <p className="text-sm text-gray-600">
-                    After purchase, you'll receive QR codes that give you instant access to your templates. Scan the QR code to download.
+                  <h4 className="font-semibold text-white mb-2">
+                    How do I download my purchased assets?
+                  </h4>
+                  <p className="text-sm text-white/70">
+                    After purchase, you'll receive QR codes that give you
+                    instant access to your digital assets. Scan the QR code or
+                    access them from your dashboard to download.
                   </p>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Can I get a refund?</h4>
-                  <p className="text-sm text-gray-600">
-                    We offer refunds within 7 days of purchase if you're not satisfied with the quality.
+                  <h4 className="font-semibold text-white mb-2">
+                    What is your refund policy?
+                  </h4>
+                  <p className="text-sm text-white/70">
+                    We offer refunds within 7 days of purchase for technical
+                    defects, missing files, or quality issues. View our complete
+                    Refund & Cancellation Policy for details.
                   </p>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Do you offer custom templates?</h4>
-                  <p className="text-sm text-gray-600">
-                    Yes! Contact us with your requirements and we'll create custom templates for you.
+                  <h4 className="font-semibold text-white mb-2">
+                    What types of assets do you offer?
+                  </h4>
+                  <p className="text-sm text-white/70">
+                    We provide video templates, audio files, thumbnails, picture
+                    templates, and organized content folders - everything you
+                    need for professional content creation.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white mb-2">
+                    Can I use these assets commercially?
+                  </h4>
+                  <p className="text-sm text-white/70">
+                    Yes! Once purchased, you have a license to use our assets
+                    for both personal and commercial projects with unlimited
+                    usage.
                   </p>
                 </div>
               </CardContent>
@@ -154,16 +190,23 @@ export default function Contact() {
           </div>
 
           {/* Contact Form */}
-            <Card className="bg-white/10 backdrop-blur-lg border-white/20 shadow-xl">
-              <CardHeader>
-                <CardTitle className="text-2xl text-white">Send us a Message</CardTitle>
-                <p className="text-white/70">Fill out the form below and we'll get back to you as soon as possible.</p>
-              </CardHeader>
+          <Card className="bg-white/10 backdrop-blur-lg border-white/20 shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-2xl text-white">
+                Send us a Message
+              </CardTitle>
+              <p className="text-white/70">
+                Fill out the form below and we'll get back to you as soon as
+                possible.
+              </p>
+            </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="name" className="text-white">Full Name *</Label>
+                    <Label htmlFor="name" className="text-white">
+                      Full Name *
+                    </Label>
                     <Input
                       id="name"
                       name="name"
@@ -174,7 +217,9 @@ export default function Contact() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="email" className="text-white">Email Address *</Label>
+                    <Label htmlFor="email" className="text-white">
+                      Email Address *
+                    </Label>
                     <Input
                       id="email"
                       name="email"
@@ -188,7 +233,9 @@ export default function Contact() {
                 </div>
 
                 <div>
-                  <Label htmlFor="subject" className="text-white">Subject *</Label>
+                  <Label htmlFor="subject" className="text-white">
+                    Subject *
+                  </Label>
                   <Input
                     id="subject"
                     name="subject"
@@ -201,7 +248,9 @@ export default function Contact() {
                 </div>
 
                 <div>
-                  <Label htmlFor="message" className="text-white">Message *</Label>
+                  <Label htmlFor="message" className="text-white">
+                    Message *
+                  </Label>
                   <Textarea
                     id="message"
                     name="message"
@@ -214,9 +263,9 @@ export default function Contact() {
                   />
                 </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-8 py-3 text-lg" 
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-8 py-3 text-lg"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
